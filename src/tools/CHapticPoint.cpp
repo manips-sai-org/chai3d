@@ -69,12 +69,12 @@ cHapticPoint::cHapticPoint(cGenericTool* a_parentTool)
     m_meshProxyContacts[0] = NULL;
     m_meshProxyContacts[1] = NULL;
     m_meshProxyContacts[2] = NULL;
-    m_audioSourceImpact[0] = NULL;
-    m_audioSourceImpact[1] = NULL;
-    m_audioSourceImpact[2] = NULL;
-    m_audioSourceFriction[0] = NULL;
-    m_audioSourceFriction[1] = NULL;
-    m_audioSourceFriction[2] = NULL;
+    // m_audioSourceImpact[0] = NULL;
+    // m_audioSourceImpact[1] = NULL;
+    // m_audioSourceImpact[2] = NULL;
+    // m_audioSourceFriction[0] = NULL;
+    // m_audioSourceFriction[1] = NULL;
+    // m_audioSourceFriction[2] = NULL;
     m_audioProxyContacts[0]	= NULL;
     m_audioProxyContacts[1]	= NULL;
     m_audioProxyContacts[2]	= NULL;
@@ -123,23 +123,23 @@ cHapticPoint::~cHapticPoint()
     delete m_sphereProxy;
     delete m_sphereGoal;
 
-    // delete audio sources for impact
-    for (int i = 0; i<3; i++)
-    {
-        if (m_audioSourceImpact[i] != NULL)
-        {
-            delete m_audioSourceImpact[i];
-        }
-    }
+    // // delete audio sources for impact
+    // for (int i = 0; i<3; i++)
+    // {
+    //     if (m_audioSourceImpact[i] != NULL)
+    //     {
+    //         delete m_audioSourceImpact[i];
+    //     }
+    // }
 
-    // delete audio sources for friction
-    for (int i = 0; i<3; i++)
-    {
-        if (m_audioSourceFriction[i] != NULL)
-        {
-            delete m_audioSourceFriction[i];
-        }
-    }
+    // // delete audio sources for friction
+    // for (int i = 0; i<3; i++)
+    // {
+    //     if (m_audioSourceFriction[i] != NULL)
+    //     {
+    //         delete m_audioSourceFriction[i];
+    //     }
+    // }
 }
 
 
@@ -368,29 +368,29 @@ void cHapticPoint::setShow(bool a_showProxy,
     \param  a_audioDevice  Audio device.
 */
 //==============================================================================
-bool cHapticPoint::createAudioSource(cAudioDevice* a_audioDevice)
-{
-    // sanity check
-    if (a_audioDevice == NULL) { return (C_ERROR); }
+// bool cHapticPoint::createAudioSource(cAudioDevice* a_audioDevice)
+// {
+//     // sanity check
+//     if (a_audioDevice == NULL) { return (C_ERROR); }
 
-    // create three audio sources for impact
-    for (int i=0; i<3; i++)
-    {
-        m_audioSourceImpact[i] = new cAudioSource();
-    }
+//     // create three audio sources for impact
+//     for (int i=0; i<3; i++)
+//     {
+//         m_audioSourceImpact[i] = new cAudioSource();
+//     }
 
-    // create three audio sources for friction
-    for (int i=0; i<3; i++)
-    {
-        m_audioSourceFriction[i] = new cAudioSource();
-    }
+//     // create three audio sources for friction
+//     for (int i=0; i<3; i++)
+//     {
+//         m_audioSourceFriction[i] = new cAudioSource();
+//     }
 
-    // audio sources have been created and are now enabled
-    m_useAudioSources = true;
+//     // audio sources have been created and are now enabled
+//     m_useAudioSources = true;
 
-    // success
-    return (C_SUCCESS);
-}
+//     // success
+//     return (C_SUCCESS);
+// }
 
 
 //==============================================================================
@@ -492,79 +492,79 @@ cVector3d cHapticPoint::computeInteractionForces(cVector3d& a_globalPos,
     // velocity of tool
     double velocity = m_parentTool->getDeviceGlobalLinVel().length();
 
-    // friction sound
-    if (m_useAudioSources)
-    {
-        for (int i=0; i<3; i++)
-        {
-            ///////////////////////////////////////////////////////////////////
-            // FRICTION SOUND
-            ///////////////////////////////////////////////////////////////////
-            m_audioSourceFriction[i]->setSourcePos(a_globalPos);
+    // // friction sound
+    // if (m_useAudioSources)
+    // {
+    //     for (int i=0; i<3; i++)
+    //     {
+    //         ///////////////////////////////////////////////////////////////////
+    //         // FRICTION SOUND
+    //         ///////////////////////////////////////////////////////////////////
+    //         m_audioSourceFriction[i]->setSourcePos(a_globalPos);
 
-            // if tool is not in contact, or material does not exist, turn off sound.
-            if (m_meshProxyContacts[i] == NULL)
-            {
-                m_audioSourceFriction[i]->setGain(0.0);
-            }
+    //         // if tool is not in contact, or material does not exist, turn off sound.
+    //         if (m_meshProxyContacts[i] == NULL)
+    //         {
+    //             m_audioSourceFriction[i]->setGain(0.0);
+    //         }
 
-            // if tool is in contact and material exist
-            else
-            {
-                // check if tool is touching a new material, in which case we swap audio buffers
-                if (m_meshProxyContacts[i]->m_material->getAudioFrictionBuffer() != NULL)
-                {
-                    if (m_audioSourceFriction[i]->getAudioBuffer() != m_meshProxyContacts[i]->m_material->getAudioFrictionBuffer())
-                    {
-                        m_audioSourceFriction[i]->stop();
-                        m_audioSourceFriction[i]->setGain(0.0);
-                        m_audioSourceFriction[i]->setPitch(1.0);
-                        m_audioSourceFriction[i]->setAudioBuffer(m_meshProxyContacts[i]->m_material->getAudioFrictionBuffer());
-                        m_audioSourceFriction[i]->setLoop(true);
-                        m_audioSourceFriction[i]->play();
-                    }
-                }
+    //         // if tool is in contact and material exist
+    //         else
+    //         {
+    //             // check if tool is touching a new material, in which case we swap audio buffers
+    //             if (m_meshProxyContacts[i]->m_material->getAudioFrictionBuffer() != NULL)
+    //             {
+    //                 if (m_audioSourceFriction[i]->getAudioBuffer() != m_meshProxyContacts[i]->m_material->getAudioFrictionBuffer())
+    //                 {
+    //                     m_audioSourceFriction[i]->stop();
+    //                     m_audioSourceFriction[i]->setGain(0.0);
+    //                     m_audioSourceFriction[i]->setPitch(1.0);
+    //                     m_audioSourceFriction[i]->setAudioBuffer(m_meshProxyContacts[i]->m_material->getAudioFrictionBuffer());
+    //                     m_audioSourceFriction[i]->setLoop(true);
+    //                     m_audioSourceFriction[i]->play();
+    //                 }
+    //             }
 
-                // we compute an angle that compares the velocity of the tool with the reaction force. This friction maximizes
-                // returns a value between o.0 and 1.0 which maximize tangential forces, versus normal forces. The higher
-                // the tangential force, the higher the sound level. This is slightly hacky but could be improved by 
-                // taking the exact tangential component of the force.
-                double angleFactor = 0.0;
-                if ((force > C_SMALL) && (velocity > C_SMALL))
-                {
-                    angleFactor = cSqr(cSqr(sin(cAngle(m_lastComputedGlobalForce,  m_parentTool->getDeviceGlobalLinVel())))) ;
-                }
+    //             // we compute an angle that compares the velocity of the tool with the reaction force. This friction maximizes
+    //             // returns a value between o.0 and 1.0 which maximize tangential forces, versus normal forces. The higher
+    //             // the tangential force, the higher the sound level. This is slightly hacky but could be improved by 
+    //             // taking the exact tangential component of the force.
+    //             double angleFactor = 0.0;
+    //             if ((force > C_SMALL) && (velocity > C_SMALL))
+    //             {
+    //                 angleFactor = cSqr(cSqr(sin(cAngle(m_lastComputedGlobalForce,  m_parentTool->getDeviceGlobalLinVel())))) ;
+    //             }
 
-                // adjust audio gains according to material properties, and force and velocity of tool.
-                m_audioSourceFriction[i]->setGain((float)(m_meshProxyContacts[i]->m_material->getAudioFrictionGain() * angleFactor * force * cSqr(velocity)));
-                m_audioSourceFriction[i]->setPitch((float)(m_meshProxyContacts[i]->m_material->getAudioFrictionPitchOffset() + m_meshProxyContacts[i]->m_material->getAudioFrictionPitchGain() * velocity));
-            }
+    //             // adjust audio gains according to material properties, and force and velocity of tool.
+    //             m_audioSourceFriction[i]->setGain((float)(m_meshProxyContacts[i]->m_material->getAudioFrictionGain() * angleFactor * force * cSqr(velocity)));
+    //             m_audioSourceFriction[i]->setPitch((float)(m_meshProxyContacts[i]->m_material->getAudioFrictionPitchOffset() + m_meshProxyContacts[i]->m_material->getAudioFrictionPitchGain() * velocity));
+    //         }
 
-            ///////////////////////////////////////////////////////////////////
-            // IMAPCT SOUND
-            ///////////////////////////////////////////////////////////////////
-            m_audioSourceImpact[i]->setSourcePos(a_globalPos);
+    //         ///////////////////////////////////////////////////////////////////
+    //         // IMAPCT SOUND
+    //         ///////////////////////////////////////////////////////////////////
+    //         m_audioSourceImpact[i]->setSourcePos(a_globalPos);
 
-            if ((m_audioProxyContacts[i] == NULL) && (m_meshProxyContacts[i] != NULL))
-            {
-                if ((m_audioSourceImpact[i]->getAudioBuffer() != m_meshProxyContacts[i]->m_material->getAudioImpactBuffer()) && 
-                    (m_meshProxyContacts[i]->m_material->getAudioImpactBuffer() != NULL))
-                {
-                    m_audioSourceImpact[i]->stop();
-                    m_audioSourceImpact[i]->setAudioBuffer(m_meshProxyContacts[i]->m_material->getAudioImpactBuffer());
-                    m_audioSourceImpact[i]->setLoop(false);
-                }
+    //         if ((m_audioProxyContacts[i] == NULL) && (m_meshProxyContacts[i] != NULL))
+    //         {
+    //             if ((m_audioSourceImpact[i]->getAudioBuffer() != m_meshProxyContacts[i]->m_material->getAudioImpactBuffer()) && 
+    //                 (m_meshProxyContacts[i]->m_material->getAudioImpactBuffer() != NULL))
+    //             {
+    //                 m_audioSourceImpact[i]->stop();
+    //                 m_audioSourceImpact[i]->setAudioBuffer(m_meshProxyContacts[i]->m_material->getAudioImpactBuffer());
+    //                 m_audioSourceImpact[i]->setLoop(false);
+    //             }
 
-                m_audioSourceImpact[i]->setGain((float)(m_meshProxyContacts[i]->m_material->getAudioImpactGain() * cSqr(velocity)));
-                m_audioSourceImpact[i]->play();
-            }
+    //             m_audioSourceImpact[i]->setGain((float)(m_meshProxyContacts[i]->m_material->getAudioImpactGain() * cSqr(velocity)));
+    //             m_audioSourceImpact[i]->play();
+    //         }
 
-            // update contact list
-            m_audioProxyContacts[i] = m_meshProxyContacts[i];
-        }
+    //         // update contact list
+    //         m_audioProxyContacts[i] = m_meshProxyContacts[i];
+    //     }
 
 
-    }
+    // }
 
     // return result
     return (m_lastComputedGlobalForce);

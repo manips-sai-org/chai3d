@@ -1197,25 +1197,25 @@ void cGenericTool::setShaderProgram(cShaderProgramPtr a_shaderProgram,
 }
 
 
-//==============================================================================
-/*!
-    This method creates an audio source for this tool.
+// //==============================================================================
+// /*!
+//     This method creates an audio source for this tool.
 
-    \param  a_audioDevice  Audio device.
-*/
-//==============================================================================
-bool cGenericTool::createAudioSource(cAudioDevice* a_audioDevice)
-{
-    for (unsigned int i=0; i<m_hapticPoints.size(); i++)
-    {
-        if (m_hapticPoints[i]->createAudioSource(a_audioDevice) == false)
-        {
-            return (C_ERROR);
-        }
-    }
+//     \param  a_audioDevice  Audio device.
+// */
+// //==============================================================================
+// bool cGenericTool::createAudioSource(cAudioDevice* a_audioDevice)
+// {
+//     for (unsigned int i=0; i<m_hapticPoints.size(); i++)
+//     {
+//         if (m_hapticPoints[i]->createAudioSource(a_audioDevice) == false)
+//         {
+//             return (C_ERROR);
+//         }
+//     }
 
-    return (C_SUCCESS);
-}
+//     return (C_SUCCESS);
+// }
 
 //------------------------------------------------------------------------------
 } // namespace chai3d

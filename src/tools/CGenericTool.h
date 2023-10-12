@@ -477,7 +477,7 @@ public:
 public:
 
     //! This method creates an audio source for each haptic point of this tool.
-    bool createAudioSource(cAudioDevice* a_audioDevice);
+    // bool createAudioSource(cAudioDevice* a_audioDevice);
 
 
     //--------------------------------------------------------------------------
