@@ -46,7 +46,7 @@
 #ifndef CCameraH
 #define CCameraH
 //------------------------------------------------------------------------------
-// #include "audio/CAudioDevice.h"
+#include "audio/CAudioDevice.h"
 #include "world/CGenericObject.h"
 #include "math/CMaths.h"
 #include "graphics/CImage.h"
@@ -398,13 +398,13 @@ public:
     // PUBLIC METHODS - AUDIO DEVICE:
     //-----------------------------------------------------------------------
 
-// public:
+public:
 
-//     //! This method attaches an audio device to the camera.
-//     void attachAudioDevice(cAudioDevice* a_audioDevice) { m_audioDevice = a_audioDevice; }
+    //! This method attaches an audio device to the camera.
+    void attachAudioDevice(cAudioDevice* a_audioDevice) { m_audioDevice = a_audioDevice; }
 
-//     //! This method detaches the current audio device from the camera.
-//     void detachAudioDevice() { m_audioDevice = NULL; }
+    //! This method detaches the current audio device from the camera.
+    void detachAudioDevice() { m_audioDevice = NULL; }
 
 
     //-----------------------------------------------------------------------
@@ -507,8 +507,8 @@ protected:
     //! Camera origin (spherical coordinates).
     cVector3d m_originReference;
 
-    // //! Optionally attached audio device.
-    // cAudioDevice* m_audioDevice;
+    //! Optionally attached audio device.
+    cAudioDevice* m_audioDevice;
 
 
     //-----------------------------------------------------------------------

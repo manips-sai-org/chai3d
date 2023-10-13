@@ -60,9 +60,9 @@
 //! \defgroup   audio  Audio
 //! \brief      Implements audio capabilities.
 //---------------------------------------------------------------------------
-// #include "audio/CAudioBuffer.h"
-// #include "audio/CAudioDevice.h"
-// #include "audio/CAudioSource.h"
+#include "audio/CAudioBuffer.h"
+#include "audio/CAudioDevice.h"
+#include "audio/CAudioSource.h"
 
 
 //---------------------------------------------------------------------------

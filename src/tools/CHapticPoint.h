@@ -45,7 +45,7 @@
 #ifndef cHapticPointH
 #define cHapticPointH
 //------------------------------------------------------------------------------
-// #include "audio/CAudioDevice.h"
+#include "audio/CAudioDevice.h"
 #include "forces/CAlgorithmFingerProxy.h"
 #include "forces/CAlgorithmPotentialField.h"
 #include "world/CGenericObject.h"
@@ -167,8 +167,8 @@ public:
                  bool a_showGoal = false,
                  cColorf a_colorLine = cColorf(0.5, 0.5, 0.5));
 
-    // //! This method Create an audio source for this haptic point.
-    // bool createAudioSource(cAudioDevice* a_audioDevice);
+    //! This method Create an audio source for this haptic point.
+    bool createAudioSource(cAudioDevice* a_audioDevice);
 
 
     //--------------------------------------------------------------------------
@@ -293,11 +293,11 @@ protected:
 
 protected:
 
-    // //! Optional audio source for rendering sound impacts with environment.
-    // cAudioSource* m_audioSourceImpact[3];
+    //! Optional audio source for rendering sound impacts with environment.
+    cAudioSource* m_audioSourceImpact[3];
 
-    // //! Optional audio source for rendering sound friction.
-    // cAudioSource* m_audioSourceFriction[3];
+    //! Optional audio source for rendering sound friction.
+    cAudioSource* m_audioSourceFriction[3];
 
     //! If __true__ then audio sources are enabled.
     bool m_useAudioSources;

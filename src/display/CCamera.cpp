@@ -145,8 +145,8 @@ cCamera::cCamera(cWorld* a_parentWorld)
     m_posPolarRad = 0.0;
     m_posAzimuthRad = 0.0;
 
-//     // audio device
-//     m_audioDevice = NULL;
+    // audio device
+    m_audioDevice = NULL;
 }
 
 
@@ -1698,12 +1698,12 @@ void cCamera::renderView(const int a_windowWidth,
     // (5) AUDIO DEVICE
     //-----------------------------------------------------------------------
 
-    // // update position of optionally attached audio device
-    // if (m_audioDevice != NULL)
-    // {
-    //     m_audioDevice->setListenerPos(m_globalPos);
-    //     m_audioDevice->setListenerRot(m_globalRot);
-    // }
+    // update position of optionally attached audio device
+    if (m_audioDevice != NULL)
+    {
+        m_audioDevice->setListenerPos(m_globalPos);
+        m_audioDevice->setListenerRot(m_globalRot);
+    }
 
 #endif
 }
