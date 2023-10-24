@@ -41,7 +41,7 @@
 # configuration
 #
 
-cmake_minimum_required (VERSION 3.0.0)
+cmake_minimum_required (VERSION 3.10)
 project (CHAI3D)
 
 # version info
@@ -158,9 +158,6 @@ include_directories (${PROJECT_SOURCE_DIR}/external/giflib/include)
 include_directories (${PROJECT_SOURCE_DIR}/external/lib3ds/include)
 include_directories (${PROJECT_SOURCE_DIR}/external/libjpeg/include)
 include_directories (${PROJECT_SOURCE_DIR}/external/libpng/include)
-# include_directories (${PROJECT_SOURCE_DIR}/external/openal/include)
-# include_directories (${PROJECT_SOURCE_DIR}/external/openal/OpenAL32/Include)
-# include_directories (${PROJECT_SOURCE_DIR}/external/openal/Alc)
 include_directories (${PROJECT_SOURCE_DIR}/external/pugixml/include)
 include_directories (${PROJECT_SOURCE_DIR}/external/theoraplayer/include/theoraplayer)
 include_directories (${PROJECT_SOURCE_DIR}/external/theoraplayer/external/ogg/include)
@@ -180,7 +177,6 @@ file (GLOB_RECURSE source_3ds       RELATIVE ${PROJECT_SOURCE_DIR} ${PROJECT_SOU
 file (GLOB_RECURSE source_jpeg      RELATIVE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/external/libjpeg/*.c      ${PROJECT_SOURCE_DIR}/external/libjpeg/*.h)
 file (GLOB_RECURSE source_png       RELATIVE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/external/libpng/*.c       ${PROJECT_SOURCE_DIR}/external/libpng/*.h)
 file (GLOB_RECURSE source_pugixml   RELATIVE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/external/pugixml/*.c      ${PROJECT_SOURCE_DIR}/external/pugixml/*.h)
-# file (GLOB_RECURSE source_openal    RELATIVE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/external/openal/*.c       ${PROJECT_SOURCE_DIR}/external/openal/*.h)
 file (GLOB_RECURSE source_theora    RELATIVE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/external/theoraplayer/*.c ${PROJECT_SOURCE_DIR}/external/theoraplayer/*.cpp ${PROJECT_SOURCE_DIR}/external/theoraplayer/*.h)
 
 # platform-specific source files adjustments
