@@ -152,7 +152,6 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 
 # header search path
 include_directories (${PROJECT_SOURCE_DIR}/src)
-include_directories (EIGEN3_INCLUDE_DIR)
 include_directories (${PROJECT_SOURCE_DIR}/external/glew/include)
 include_directories (${PROJECT_SOURCE_DIR}/external/giflib/include)
 include_directories (${PROJECT_SOURCE_DIR}/external/lib3ds/include)
@@ -202,7 +201,7 @@ add_definitions (${PROJECT_DEFINITIONS} -DGLEW_STATIC -DAL_ALEXT_PROTOTYPES -DAL
 add_library (chai3d STATIC ${source} ${source_gif} ${source_glew} ${source_3ds} ${source_jpeg} ${source_png} ${source_pugixml} ${source_theora})
 
 # library exports
-set (CHAI3D_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src" "${EIGEN3_INCLUDE_DIR}" "${PROJECT_SOURCE_DIR}/external/glew/include" "${OPENGL_INCLUDE_DIR}" "${OPENAL_INCLUDE_DIR}")
+set (CHAI3D_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/external/glew/include" "${OPENGL_INCLUDE_DIR}" "${OPENAL_INCLUDE_DIR}")
 set (CHAI3D_LIBRARIES chai3d ${OPENGL_LIBRARIES} ${OPENAL_LIBRARY})
 set (CHAI3D_DEFINITIONS ${PROJECT_DEFINITIONS})
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES Windows)
