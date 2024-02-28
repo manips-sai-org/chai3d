@@ -119,6 +119,13 @@ bool cLoadFileSTL(cMultiMesh* a_object, const std::string& a_filename)
     cHeaderSTL header;
     file.read((char*)(&header), 84);
 
+	// check if the file is an ASCII file (not supported)
+	if(std::strncmp(header.m_header, "solid", 5) == 0) {
+		file.close();
+		fprintf(stderr, "Error: ASCII STL files are not supported\n");
+		return (C_ERROR);
+	}
+
     // read number of triangles
     unsigned int numTriangles = header.m_numTriangles;
     if (numTriangles == 0)
