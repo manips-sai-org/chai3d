@@ -141,7 +141,7 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES Linux)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES Darwin)
   set(PROJECT_DEFINITIONS ${PROJECT_DEFINITIONS} -DMACOSX)
   set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -Qunused-arguments -Wno-deprecated -std=c++0x -stdlib=libc++ -I/opt/homebrew/opt/openal-soft/include"
+      "${CMAKE_CXX_FLAGS} -Qunused-arguments -Wno-deprecated -std=c++0x -stdlib=libc++ -I/opt/homebrew/opt/openal-soft/include -I/usr/local/Cellar/openal-soft/1.23.1/include"
   )
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}   -Qunused-arguments -Wno-deprecated")
 endif()
