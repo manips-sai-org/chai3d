@@ -1,0 +1,17 @@
+newmtl Base_Blue
+Ns 200.000000
+Ka 0.4 0.4 0.4
+Kd 0.0 0.05 0.8
+Ks 0.2 0.2 0.2
+Ni 1.5
+d 1.0
+illum 2
+
+newmtl Patch_Yellow.001
+Ns 200.000000
+Ka 0.4 0.4 0.4
+Kd 0.3 0.8 0.0
+Ks 0.2 0.2 0.2
+Ni 1.5
+d 1.0
+illum 2
