@@ -79,7 +79,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # build examples and extras
-option(BUILD_EXAMPLES "Build examples" OFF)
+option(BUILD_EXAMPLES "Build examples" ON)
 
 # output location
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${OS}-${ARCH})
@@ -174,6 +174,9 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/external/theoraplayer/external/vorbis/lib)
 include_directories(${PROJECT_SOURCE_DIR}/external/theoraplayer/src/Theora)
 
+include_directories(${PROJECT_SOURCE_DIR}/modules/ODE/external/ODE/include)
+include_directories(${PROJECT_SOURCE_DIR}/modules/ODE/src)
+
 # static library source files
 file(
   GLOB_RECURSE source
@@ -217,6 +220,14 @@ file(
   ${PROJECT_SOURCE_DIR}/external/theoraplayer/*.c
   ${PROJECT_SOURCE_DIR}/external/theoraplayer/*.cpp
   ${PROJECT_SOURCE_DIR}/external/theoraplayer/*.h)
+file(
+  GLOB_RECURSE source_ode
+  RELATIVE ${PROJECT_SOURCE_DIR}
+  ${PROJECT_SOURCE_DIR}/modules/ODE/external/ODE/*.c
+  ${PROJECT_SOURCE_DIR}/modules/ODE/external/ODE/*.h
+  ${PROJECT_SOURCE_DIR}/modules/ODE/src/*.cpp
+  ${PROJECT_SOURCE_DIR}/modules/ODE/src/*.h
+)
 
 # platform-specific source files adjustments
 if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
@@ -242,7 +253,8 @@ foreach(
   ${source_jpeg}
   ${source_png}
   ${source_pugixml}
-  ${source_theora})
+  ${source_theora}
+  ${source_ode})
   get_filename_component(PARENT_DIR "${FILE}" PATH)
   string(REGEX REPLACE "(\\./)?(src|include)/?" "" GROUP "${PARENT_DIR}")
   string(REPLACE "/" "\\" GROUP "${GROUP}")
@@ -269,12 +281,13 @@ add_library(
   ${source_jpeg}
   ${source_png}
   ${source_pugixml}
-  ${source_theora})
+  ${source_theora}
+  ${source_ode})
 
 # library exports
 set(CHAI3D_INCLUDE_DIRS
     "${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/external/glew/include"
-    "${OPENGL_INCLUDE_DIR}" "${OPENAL_INCLUDE_DIR}")
+    "${OPENGL_INCLUDE_DIR}" "${OPENAL_INCLUDE_DIR}" )
 set(CHAI3D_LIBRARIES chai3d ${OPENGL_LIBRARIES} ${OPENAL_LIBRARY})
 set(CHAI3D_DEFINITIONS ${PROJECT_DEFINITIONS})
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES Windows)

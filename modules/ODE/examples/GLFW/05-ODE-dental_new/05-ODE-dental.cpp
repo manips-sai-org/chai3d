@@ -101,7 +101,7 @@ double linGain = 0.2;
 double angGain = 0.03;
 double linG;
 double angG;
-double linStiffness = 1300;
+double linStiffness = 800;
 double angStiffness = 30;
 
 //---------------------------------------------------------------------------
@@ -116,6 +116,14 @@ cODEGenericBody *ODETeeth;
 cODEGenericBody *ODETool;
 
 //---------------------------------------------------------------------------
+// AUDIO VARIABLES
+//---------------------------------------------------------------------------
+cAudioDevice *audioDevice;
+cAudioBuffer *audioBufferImpact;
+cAudioSource *audioSourceTeeth;
+bool teethContactActive = false;
+
+//---------------------------------------------------------------------------
 // GENERAL VARIABLES
 //---------------------------------------------------------------------------
 
@@ -124,8 +132,6 @@ bool simulationRunning = false;
 
 // flag to indicate if the haptic simulation has terminated
 bool simulationFinished = true;
-
-bool goalReached = false;
 
 // a frequency counter to measure the simulation graphic rate
 cFrequencyCounter freqCounterGraphics;
@@ -150,8 +156,6 @@ int swapInterval = 1;
 
 // root resource path
 string resourceRoot;
-
-cBackground *background;
 
 //---------------------------------------------------------------------------
 // DECLARED MACROS
@@ -341,25 +345,22 @@ int main(int argc, char *argv[])
     light = new cSpotLight(world);
 
     // attach light to camera
-    // world->addChild(light);
-    camera->addChild(light);
-    light->setLocalPos(0.0, -1.0, 0.0);
-    light->setDir(-1.0, 0.5, 0.0);
+    world->addChild(light);
 
     // enable light source
     light->setEnabled(true);
 
-    // position the light source to the LEFT of the scene
-    // light->setLocalPos(-2.0, 2.0, 1.0);
+    // position the light source
+    light->setLocalPos(2.0, 2.0, 1.0);
 
-    // // make it shine toward the right and downward
-    // light->setDir(2.0, -2.0, -1.0);
+    // define the direction of the light beam
+    light->setDir(-2.0, -2.0, -1.0);
 
     // set uniform concentration level of light
-    light->setSpotExponent(10.0);
+    light->setSpotExponent(5.0);
 
     // enable this light source to generate shadows
-    light->setShadowMapEnabled(false);
+    light->setShadowMapEnabled(true);
 
     // set the resolution of the shadow map
     // light->m_shadowMap->setQualityLow();
@@ -423,7 +424,7 @@ int main(int argc, char *argv[])
     camera->m_frontLayer->addChild(labelRates);
 
     // create a background
-    background = new cBackground();
+    cBackground *background = new cBackground();
     camera->m_backLayer->addChild(background);
 
     // set background properties
@@ -465,24 +466,25 @@ int main(int argc, char *argv[])
     // load model
     bool fileload;
     // fileload = imgTeeth->loadFromFile(RESOURCE_PATH("../resources/models/dental/teeth-bottom.3ds"));
-    fileload = imgTeeth->loadFromFile(RESOURCE_PATH("../resources/models/feel/spike_new_painted.obj"));
+    fileload = imgTeeth->loadFromFile(RESOURCE_PATH("../resources/models/feel/spike.obj"));
     if (!fileload)
     {
+        cout << "ERRROR - 3D Model failed to load correctly." << endl;
 #if defined(_MSVC)
         fileload = imgTeeth->loadFromFile("../../../bin/resources/models/dental/teeth-bottom.3ds");
 #endif
     }
 
     // scale object
-    // imgTeeth->scale(0.01);
-    imgTeeth->scale(0.07);
+    // imgTeeth->scale(0.004);
+    imgTeeth->scale(0.01);
 
     // create collision detetctor
     imgTeeth->createAABBCollisionDetector(0.0);
 
     // assign haptic properties
     cMaterial matTeeth;
-    matTeeth.setStiffness(0.8 * maxStiffness);
+    matTeeth.setStiffness(0.3 * maxStiffness);
     matTeeth.setHapticTriangleSides(true, false);
     imgTeeth->setMaterial(matTeeth);
 
@@ -491,39 +493,39 @@ int main(int argc, char *argv[])
 
     // create a dynamic model of the ODE object. Here we decide to use a box just like
     // the object mesh we just defined
-    ODETeeth->createDynamicMesh(true);
+    ODETeeth->createDynamicMesh(false);
 
     // position and orient model
-    ODETeeth->setLocalPos(0.0, 0.0, -0.3);
-    ODETeeth->rotateAboutGlobalAxisDeg(cVector3d(0, 0, 1), -60);
-    // ODETeeth->rotateAboutGlobalAxisDeg(cVector3d(0, 1, 0), 20);
+    ODETeeth->setLocalPos(0.0, 0.0, -0.5);
+    ODETeeth->rotateAboutGlobalAxisDeg(cVector3d(0, 0, 1), 90);
+    ODETeeth->rotateAboutGlobalAxisDeg(cVector3d(0, 1, 0), 20);
+
+    dBodySetAngularDamping(ODETeeth->m_ode_body, 0.3);
+    dBodySetLinearDamping(ODETeeth->m_ode_body, 0.1);
 
     // create a virtual tool
     ODETool = new cODEGenericBody(ODEWorld);
     cMultiMesh *imgTool = new cMultiMesh();
 
     // fileload = imgTool->loadFromFile(RESOURCE_PATH("../resources/models/dental/drill.obj"));
-    fileload = imgTool->loadFromFile(RESOURCE_PATH("../resources/models/feel/vaccine_new_painted.obj"));
+    fileload = imgTool->loadFromFile(RESOURCE_PATH("../resources/models/feel/vaccine.obj"));
     if (!fileload)
     {
 #if defined(_MSVC)
         fileload = imgTool->loadFromFile("../../../bin/resources/models/dental/drill.obj");
 #endif
     }
-    // imgTool->scale(0.01);
-    imgTool->scale(0.07);
+    imgTool->scale(0.01);
 
     // define some material properties for each cube
     cMaterial matTool;
     matTool.setGrayLevel(0.5);
-    // imgTool->setMaterial(matTool, true);
+    imgTool->setMaterial(matTool, true);
     imgTool->setHapticEnabled(false);
 
     // add mesh to ODE object
     ODETool->setImageModel(imgTool);
     ODETool->createDynamicMesh(false);
-
-    ODETool->rotateAboutGlobalAxisDeg(cVector3d(1, 0, 0), 90);
 
     // define some mass properties for each cube
     ODETool->setMass(0.01);
@@ -792,25 +794,6 @@ void updateGraphics(void)
     // RENDER SCENE
     /////////////////////////////////////////////////////////////////////
 
-    // change background color based on goal status
-    if (goalReached)
-    {
-        background->setCornerColors(
-            cColorf(0.0f, 1.0f, 0.0f), // bright green top-left
-            cColorf(0.0f, 1.0f, 0.0f), // bright green top-right
-            cColorf(0.0f, 0.8f, 0.0f), // slightly darker bottom-left
-            cColorf(0.0f, 0.8f, 0.0f)  // slightly darker bottom-right
-        );
-    }
-    else
-    {
-        background->setCornerColors(
-            cColorf(1.0f, 1.0f, 1.0f),
-            cColorf(1.0f, 1.0f, 1.0f),
-            cColorf(0.8f, 0.8f, 0.8f),
-            cColorf(0.8f, 0.8f, 0.8f));
-    }
-
     // update shadow maps (if any)
     world->updateShadowMaps(false, mirroredDisplay);
 
@@ -875,27 +858,6 @@ void updateHaptics(void)
         cVector3d posTool = ODETool->getLocalPos();
         cMatrix3d rotTool = ODETool->getLocalRot();
 
-        cVector3d posGoal = cVector3d(0.0485097, -0.139772, -0.338828);
-        cMatrix3d rotGoal = cMatrix3d(cVector3d(0.79, -0.61, -0.09), cVector3d(0.59, 0.79, -0.18), cVector3d(0.18, 0.09, 0.98));
-
-        cMatrix3d rotDiff = cTranspose(rotTool) * rotGoal;
-
-        cVector3d axis2;
-        double angle2;
-        rotDiff.toAxisAngle(axis2, angle2);
-
-        float errorPos = (posTool - posGoal).length();
-        float errorAngle = fabs(angle2);
-
-        if ((posTool - posGoal).length() < 0.02 && fabs(angle2) < 0.3)
-        {
-            goalReached = true;
-        }
-        else
-        {
-            goalReached = false;
-        }
-
         // compute position and angular error between tool and haptic device
         cVector3d deltaPos = (posDevice - posTool);
         cMatrix3d deltaRot = cMul(cTranspose(rotTool), rotDevice);
@@ -940,6 +902,27 @@ void updateHaptics(void)
         {
             angG = angGain;
         }
+
+        //-----------------------------------------------------------------------
+        // SPRING FORCE TO KEEP TEETH NEAR ORIGIN
+        //-----------------------------------------------------------------------
+
+        // get position
+        cVector3d posTeeth = ODETeeth->getLocalPos();
+
+        // get linear velocity from ODE
+        const dReal *v = dBodyGetLinearVel(ODETeeth->m_ode_body);
+        cVector3d velTeeth(v[0], v[1], v[2]);
+
+        // spring parameters
+        const double K_spring = 200.0; // stiffness
+        const double D_damping = 30.0; // damping
+
+        // compute spring force
+        cVector3d springForce = -K_spring * posTeeth - D_damping * velTeeth;
+
+        // apply to ODE body
+        ODETeeth->addExternalForce(springForce);
 
         // update simulation
         ODEWorld->updateDynamics(nextSimInterval);

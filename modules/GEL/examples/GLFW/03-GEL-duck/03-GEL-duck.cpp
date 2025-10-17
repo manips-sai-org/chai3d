@@ -33,7 +33,7 @@
     CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-    POSSIBILITY OF SUCH DAMAGE. 
+    POSSIBILITY OF SUCH DAMAGE.
 
     \author    <http://www.chai3d.org>
     \author    Francois Conti
@@ -60,7 +60,7 @@ using namespace std;
 
 // stereo Mode
 /*
-    C_STEREO_DISABLED:            Stereo is disabled 
+    C_STEREO_DISABLED:            Stereo is disabled
     C_STEREO_ACTIVE:              Active stereo for OpenGL NVDIA QUADRO cards
     C_STEREO_PASSIVE_LEFT_RIGHT:  Passive stereo where L/R images are rendered next to each other
     C_STEREO_PASSIVE_TOP_BOTTOM:  Passive stereo where L/R images are rendered above each other
@@ -74,24 +74,23 @@ bool fullscreen = false;
 bool mirroredDisplay = false;
 
 // TetGen switches
-char TETGEN_SWITCHES[]    = "pq1.414a0.002";
-
+char TETGEN_SWITCHES[] = "pq1.414a0.002";
 
 //---------------------------------------------------------------------------
 // DECLARED VARIABLES
 //---------------------------------------------------------------------------
 
 // a world that contains all objects of the virtual environment
-cWorld* world;
+cWorld *world;
 
 // a camera to render the world in the window display
-cCamera* camera;
+cCamera *camera;
 
 // a light source to illuminate the objects in the world
 cDirectionalLight *light;
 
 // a haptic device handler
-cHapticDeviceHandler* handler;
+cHapticDeviceHandler *handler;
 
 // a haptic device
 shared_ptr<cGenericHapticDevice> hapticDevice;
@@ -106,7 +105,7 @@ double workspaceScaleFactor;
 double cursorWorkspaceRadius;
 
 // a label to display the rate [Hz] at which the simulation is running
-cLabel* labelRates;
+cLabel *labelRates;
 
 // flag to indicate if the haptic simulation currently running
 bool simulationRunning = false;
@@ -121,10 +120,10 @@ cFrequencyCounter freqCounterGraphics;
 cFrequencyCounter freqCounterHaptics;
 
 // haptic thread
-cThread* hapticsThread;
+cThread *hapticsThread;
 
 // a handle to window display context
-GLFWwindow* window = NULL;
+GLFWwindow *window = NULL;
 
 // current width of window
 int width = 0;
@@ -141,30 +140,28 @@ string resourceRoot;
 // ground level height
 double groundLevel = -0.4;
 
-
 //---------------------------------------------------------------------------
 // DECLARED MACROS
 //---------------------------------------------------------------------------
 
 // convert to resource path
-#define RESOURCE_PATH(p)    (char*)((resourceRoot+string(p)).c_str())
-
+#define RESOURCE_PATH(p) (char *)((resourceRoot + string(p)).c_str())
 
 //---------------------------------------------------------------------------
 // GEL 3D
 //---------------------------------------------------------------------------
 
 // deformable world
-cGELWorld* defWorld;
+cGELWorld *defWorld;
 
 // water
-cGELMesh* ground;
+cGELMesh *ground;
 
 // object mesh
-cGELMesh* defObject;
+cGELMesh *defObject;
 
 // haptic device  model
-cShapeSphere* device;
+cShapeSphere *device;
 double deviceRadius;
 
 // radius of the dynamic model sphere (GEM)
@@ -173,19 +170,18 @@ double radius;
 // stiffness properties between the haptic device tool and the model (GEM)
 double stiffness;
 
-
 //---------------------------------------------------------------------------
 // DECLARED FUNCTIONS
 //---------------------------------------------------------------------------
 
 // callback when the window display is resized
-void windowSizeCallback(GLFWwindow* a_window, int a_width, int a_height);
+void windowSizeCallback(GLFWwindow *a_window, int a_width, int a_height);
 
 // callback when an error GLFW occurs
-void errorCallback(int error, const char* a_description);
+void errorCallback(int error, const char *a_description);
 
 // callback when a key is pressed
-void keyCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, int a_mods);
+void keyCallback(GLFWwindow *a_window, int a_key, int a_scancode, int a_action, int a_mods);
 
 // this function renders the scene
 void updateGraphics(void);
@@ -197,22 +193,21 @@ void updateHaptics(void);
 void close(void);
 
 // compute forces between tool and environment
-cVector3d computeForce(const cVector3d& a_cursor,
+cVector3d computeForce(const cVector3d &a_cursor,
                        double a_cursorRadius,
-                       const cVector3d& a_spherePos,
+                       const cVector3d &a_spherePos,
                        double a_radius,
                        double a_stiffness);
 
 // create a filling sphere skeleton model for duck 2
 bool createSkeletonMesh(cGELMesh *a_object, char *a_filename, char *a_filenameHighRes);
 
-
 //===========================================================================
 /*
     DEMO:    GEM_duck.cpp
 
     This application illustrates the use of the GEM libraries to simulate
-    deformable objects. 
+    deformable objects.
 
     In this example we load our polygonal surface model, use the TetGen
     implementations of the tetrahedralization algorithms to compute a solid
@@ -241,7 +236,7 @@ bool createSkeletonMesh(cGELMesh *a_object, char *a_filename, char *a_filenameHi
 */
 //===========================================================================
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     //-----------------------------------------------------------------------
     // INITIALIZATION
@@ -252,16 +247,19 @@ int main(int argc, char* argv[])
     cout << "CHAI3D" << endl;
     cout << "Demo: 52-GEL-duck" << endl;
     cout << "Copyright 2003-2016" << endl;
-    cout << "-----------------------------------" << endl << endl << endl;
-    cout << "Keyboard Options:" << endl << endl;
+    cout << "-----------------------------------" << endl
+         << endl
+         << endl;
+    cout << "Keyboard Options:" << endl
+         << endl;
     cout << "[s] - Show/Hide GEL Skeleton" << endl;
     cout << "[m] - Enable/Disable vertical mirroring" << endl;
     cout << "[q] - Exit application" << endl;
-    cout << endl << endl;
+    cout << endl
+         << endl;
 
     // parse first arg to try and locate resources
-    resourceRoot = string(argv[0]).substr(0,string(argv[0]).find_last_of("/\\")+1);
-
+    resourceRoot = string(argv[0]).substr(0, string(argv[0]).find_last_of("/\\") + 1);
 
     //-----------------------------------------------------------------------
     // OPEN GL - WINDOW DISPLAY
@@ -279,7 +277,7 @@ int main(int argc, char* argv[])
     glfwSetErrorCallback(errorCallback);
 
     // compute desired size of window
-    const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
     int w = 0.8 * mode->height;
     int h = 0.5 * mode->height;
     int x = 0.5 * (mode->width - w);
@@ -337,7 +335,6 @@ int main(int argc, char* argv[])
     }
 #endif
 
-
     //-----------------------------------------------------------------------
     // 3D - SCENEGRAPH
     //-----------------------------------------------------------------------
@@ -354,9 +351,9 @@ int main(int argc, char* argv[])
     world->addChild(camera);
 
     // position and orient the camera
-    camera->set(cVector3d(1.5, 0.0, 1.6),    // camera position (eye)
-                cVector3d(0.5, 0.0, 0.0),    // lookat position (target)
-                cVector3d(0.0, 0.0, 1.0));   // direction of the (up) vector
+    camera->set(cVector3d(1.5, 0.0, 1.6),  // camera position (eye)
+                cVector3d(0.5, 0.0, 0.0),  // lookat position (target)
+                cVector3d(0.0, 0.0, 1.0)); // direction of the (up) vector
 
     // set the near and far clipping planes of the camera
     camera->setClippingPlanes(0.01, 10.0);
@@ -381,11 +378,10 @@ int main(int argc, char* argv[])
     world->addChild(light);
 
     // enable light source
-    light->setEnabled(true);                   
+    light->setEnabled(true);
 
     // define direction of light beam
-    light->setDir(-1.0,-1.0,-1.0); 
-
+    light->setDir(-1.0, -1.0, -1.0);
 
     //-----------------------------------------------------------------------
     // HAPTIC DEVICES / TOOLS
@@ -421,9 +417,8 @@ int main(int argc, char* argv[])
     device->m_material->setWhite();
     device->m_material->setShininess(100);
 
-    // interaction stiffness between tool and deformable model 
+    // interaction stiffness between tool and deformable model
     stiffness = 10;
-
 
     //-----------------------------------------------------------------------
     // COMPOSE THE VIRTUAL SCENE
@@ -432,7 +427,6 @@ int main(int argc, char* argv[])
     // create a world which supports deformable object
     defWorld = new cGELWorld();
     world->addChild(defWorld);
-
 
     /////////////////////////////////////////////////////////////////////////
     // COMPOSE WATER BED
@@ -450,23 +444,23 @@ int main(int argc, char* argv[])
     // set default physical properties for each mass node
     cGELMassParticle::s_default_mass = 0.010;
     cGELMassParticle::s_default_kDampingPos = 0.4;
-    cGELMassParticle::s_default_gravity.set(0,0,0);
+    cGELMassParticle::s_default_gravity.set(0, 0, 0);
 
     // create mesh object
-    cMesh* mesh = ground->newMesh();
+    cMesh *mesh = ground->newMesh();
 
     // create a array of polygons that simulate water
     int RESOLUTION = 15;
     double SIZE = 5.0;
-    for (int v=0; v<RESOLUTION; v++)
+    for (int v = 0; v < RESOLUTION; v++)
     {
-        for (int u=0; u<RESOLUTION; u++)
+        for (int u = 0; u < RESOLUTION; u++)
         {
             double px, py, tu, tv;
 
             // compute the position of the vertex
-            px = SIZE / (double)RESOLUTION * (double)u - (SIZE/2.0);
-            py = SIZE / (double)RESOLUTION * (double)v - (SIZE/2.0);
+            px = SIZE / (double)RESOLUTION * (double)u - (SIZE / 2.0);
+            py = SIZE / (double)RESOLUTION * (double)v - (SIZE / 2.0);
 
             // create new vertex
             unsigned int index = mesh->newVertex(px, py, groundLevel);
@@ -478,16 +472,16 @@ int main(int argc, char* argv[])
             mesh->m_vertices->setColor(index, cColorf(1.0, 0.0, 0.1));
         }
     }
-    
+
     // build particles for each vertex
     ground->buildVertices();
 
     // set all particle at edge of map as fixed
-    for (int v=0; v<RESOLUTION; v++)
+    for (int v = 0; v < RESOLUTION; v++)
     {
-        for (int u=0; u<RESOLUTION; u++)
+        for (int u = 0; u < RESOLUTION; u++)
         {
-            if ((u == 0) || (v == 0) || (u == (RESOLUTION-1)) || (v == (RESOLUTION-1)))
+            if ((u == 0) || (v == 0) || (u == (RESOLUTION - 1)) || (v == (RESOLUTION - 1)))
             {
                 unsigned int index = ((v + 0) * RESOLUTION) + (u + 0);
                 ground->m_gelVertices[index].m_massParticle->m_fixed = true;
@@ -497,11 +491,11 @@ int main(int argc, char* argv[])
 
     // set default physical properties for spring
     cGELLinearSpring::s_default_kSpringElongation = 10.0; // [N/m]
-    
+
     // create springs between particles
-    for (int v=0; v<(RESOLUTION-1); v++)
+    for (int v = 0; v < (RESOLUTION - 1); v++)
     {
-        for (int u=0; u<(RESOLUTION-1); u++)
+        for (int u = 0; u < (RESOLUTION - 1); u++)
         {
             // get the indexing numbers of the next four vertices
             unsigned int index00 = ((v + 0) * RESOLUTION) + (u + 0);
@@ -513,20 +507,20 @@ int main(int argc, char* argv[])
             mesh->newTriangle(index00, index01, index10);
             mesh->newTriangle(index10, index01, index11);
 
-            cGELMassParticle* m0 = ground->m_gelVertices[index00].m_massParticle;
-            cGELMassParticle* m1 = ground->m_gelVertices[index01].m_massParticle;
-            cGELMassParticle* m2 = ground->m_gelVertices[index10].m_massParticle;
-            cGELMassParticle* m3 = ground->m_gelVertices[index11].m_massParticle;
+            cGELMassParticle *m0 = ground->m_gelVertices[index00].m_massParticle;
+            cGELMassParticle *m1 = ground->m_gelVertices[index01].m_massParticle;
+            cGELMassParticle *m2 = ground->m_gelVertices[index10].m_massParticle;
+            cGELMassParticle *m3 = ground->m_gelVertices[index11].m_massParticle;
 
-            cGELLinearSpring* spring0 = new cGELLinearSpring(m0, m1);
-            cGELLinearSpring* spring1 = new cGELLinearSpring(m0, m2);
+            cGELLinearSpring *spring0 = new cGELLinearSpring(m0, m1);
+            cGELLinearSpring *spring1 = new cGELLinearSpring(m0, m2);
             ground->m_linearSprings.push_back(spring0);
             ground->m_linearSprings.push_back(spring1);
 
-            if ((u == (RESOLUTION-2)) || (v == (RESOLUTION-2)))
+            if ((u == (RESOLUTION - 2)) || (v == (RESOLUTION - 2)))
             {
-                cGELLinearSpring* spring2 = new cGELLinearSpring(m3, m1);
-                cGELLinearSpring* spring3 = new cGELLinearSpring(m3, m2);
+                cGELLinearSpring *spring2 = new cGELLinearSpring(m3, m1);
+                cGELLinearSpring *spring3 = new cGELLinearSpring(m3, m2);
                 ground->m_linearSprings.push_back(spring2);
                 ground->m_linearSprings.push_back(spring3);
             }
@@ -543,15 +537,15 @@ int main(int argc, char* argv[])
     shared_ptr<cTexture2d> textureGround(new cTexture2d());
     ground->setTexture(textureGround);
     ground->setUseTexture(true, true);
-    
+
     // load water texture
     bool fileload;
     fileload = textureGround->loadFromFile(RESOURCE_PATH("../resources/images/water.jpg"));
     if (!fileload)
     {
-        #if defined(_MSVC)
-        fileload = textureGround->loadFromFile("../../../bin/resources/images/water.jpg" );
-        #endif
+#if defined(_MSVC)
+        fileload = textureGround->loadFromFile("../../../bin/resources/images/water.jpg");
+#endif
         if (!fileload)
         {
             cout << "Error - 3D Model failed to load correctly." << endl;
@@ -563,7 +557,6 @@ int main(int argc, char* argv[])
     // enable environmental texturing
     textureGround->setEnvironmentMode(GL_DECAL);
     textureGround->setSphericalMappingEnabled(true);
-    
 
     /////////////////////////////////////////////////////////////////////////
     // CREATE DUCK
@@ -574,7 +567,7 @@ int main(int argc, char* argv[])
 
     // add deformable mesh to dynamic world
     defWorld->m_gelMeshes.push_back(defObject);
-    
+
     // create a skeleton composed of mass particles
     fileload = createSkeletonMesh(defObject, RESOURCE_PATH("../resources/models/ducky/duck-200.off"), RESOURCE_PATH("../resources/models/ducky/duck-full.obj"));
     if (!fileload)
@@ -590,7 +583,6 @@ int main(int argc, char* argv[])
         }
     }
 
-
     //--------------------------------------------------------------------------
     // WIDGETS
     //--------------------------------------------------------------------------
@@ -604,7 +596,7 @@ int main(int argc, char* argv[])
     labelRates->m_fontColor.setWhite();
 
     // create a background
-    cBackground* background = new cBackground();
+    cBackground *background = new cBackground();
     camera->m_backLayer->addChild(background);
 
     fileload = background->loadFromFile(RESOURCE_PATH("../resources/images/stone.jpg"));
@@ -620,10 +612,9 @@ int main(int argc, char* argv[])
         close();
         return (-1);
     }
-    
+
     // set aspect ration of background image a constant
     background->setFixedAspectRatio(true);
-
 
     //-----------------------------------------------------------------------
     // START SIMULATION
@@ -635,7 +626,6 @@ int main(int argc, char* argv[])
 
     // setup callback when application exits
     atexit(close);
-
 
     //--------------------------------------------------------------------------
     // MAIN GRAPHIC LOOP
@@ -681,8 +671,8 @@ bool createSkeletonMesh(cGELMesh *a_object, char *a_filename, char *a_filenameHi
     a_object->m_useMassParticleModel = false;
     a_object->loadFromFile(a_filenameHighRes);
 
-    cGELMesh* model = new cGELMesh();
-    cMesh* mesh = model->newMesh();
+    cGELMesh *model = new cGELMesh();
+    cMesh *mesh = model->newMesh();
 
     tetgenio input;
     if (input.load_off(a_filename))
@@ -695,9 +685,9 @@ bool createSkeletonMesh(cGELMesh *a_object, char *a_filename, char *a_filenameHi
         for (int p = 0, pi = 0; p < output.numberofpoints; ++p, pi += 3)
         {
             cVector3d point;
-            point.x(output.pointlist[pi+0]);
-            point.y(output.pointlist[pi+1]);
-            point.z(output.pointlist[pi+2]);
+            point.x(output.pointlist[pi + 0]);
+            point.y(output.pointlist[pi + 1]);
+            point.z(output.pointlist[pi + 2]);
             mesh->newVertex(point);
         }
 
@@ -708,14 +698,14 @@ bool createSkeletonMesh(cGELMesh *a_object, char *a_filename, char *a_filenameHi
             unsigned int vi[3];
             for (int i = 0; i < 3; ++i)
             {
-                int tc = output.trifacelist[ti+i];
+                int tc = output.trifacelist[ti + i];
                 vi[i] = tc;
-                int pi = tc*3;
-                p[i].x(output.pointlist[pi+0]);
-                p[i].y(output.pointlist[pi+1]);
-                p[i].z(output.pointlist[pi+2]);
+                int pi = tc * 3;
+                p[i].x(output.pointlist[pi + 0]);
+                p[i].y(output.pointlist[pi + 1]);
+                p[i].z(output.pointlist[pi + 2]);
             }
-            //unsigned int index = a_object->newTriangle(p[1], p[0], p[2]);
+            // unsigned int index = a_object->newTriangle(p[1], p[0], p[2]);
             mesh->newTriangle(vi[1], vi[0], vi[2]);
         }
 
@@ -742,34 +732,34 @@ bool createSkeletonMesh(cGELMesh *a_object, char *a_filename, char *a_filenameHi
         // resize object to screen
         if (size > 0)
         {
-            model->scale( 1.5 / size);
-            a_object->scale( 1.5 / size);
+            model->scale(1.5 / size);
+            a_object->scale(1.5 / size);
         }
 
         // setup default values for nodes
-        cGELSkeletonNode::s_default_radius        = 0.05;
-        cGELSkeletonNode::s_default_kDampingPos   = 0.3;
-        cGELSkeletonNode::s_default_kDampingRot   = 0.1;
-        cGELSkeletonNode::s_default_mass          = 0.002;  // [kg]
-        cGELSkeletonNode::s_default_showFrame     = false;
+        cGELSkeletonNode::s_default_radius = 0.05;
+        cGELSkeletonNode::s_default_kDampingPos = 0.3;
+        cGELSkeletonNode::s_default_kDampingRot = 0.1;
+        cGELSkeletonNode::s_default_mass = 0.002; // [kg]
+        cGELSkeletonNode::s_default_showFrame = false;
         cGELSkeletonNode::s_default_color.set(1.0, 0.6, 0.6);
-        cGELSkeletonNode::s_default_useGravity    = true;
+        cGELSkeletonNode::s_default_useGravity = true;
         cGELSkeletonNode::s_default_gravity.set(0.00, 0.00, -3.45);
         radius = cGELSkeletonNode::s_default_radius;
 
         a_object->buildVertices();
         model->buildVertices();
 
-        vector<cGELSkeletonNode*> nodes;
-        int i=0;
+        vector<cGELSkeletonNode *> nodes;
+        int i = 0;
         for (set<int>::iterator it = inside.begin(); it != inside.end(); ++it)
         {
-            cGELSkeletonNode* newNode = new cGELSkeletonNode();
+            cGELSkeletonNode *newNode = new cGELSkeletonNode();
             a_object->m_nodes.push_front(newNode);
 
             unsigned int vertexIndex = 0;
-            cMesh* mesh = NULL;
-            
+            cMesh *mesh = NULL;
+
             if (model->getVertex(*it, mesh, vertexIndex))
             {
                 newNode->m_pos = mesh->m_vertices->getLocalPos(vertexIndex);
@@ -783,40 +773,42 @@ bool createSkeletonMesh(cGELMesh *a_object, char *a_filename, char *a_filenameHi
         }
 
         // get all the edges of our tetrahedra
-        set< pair<int,int> > springs;
+        set<pair<int, int>> springs;
         for (int t = 0, ti = 0; t < output.numberoftetrahedra; ++t, ti += 4)
         {
             // store each edge of the tetrahedron as a pair of indices
-            for (int i = 0; i < 4; ++i) {
-                int v0 = output.tetrahedronlist[ti+i];
-                for (int j = i+1; j < 4; ++j) {
-                    int v1 = output.tetrahedronlist[ti+j];
+            for (int i = 0; i < 4; ++i)
+            {
+                int v0 = output.tetrahedronlist[ti + i];
+                for (int j = i + 1; j < 4; ++j)
+                {
+                    int v1 = output.tetrahedronlist[ti + j];
 
                     // connect only if both points are inside
                     if (inside.find(v0) != inside.end() && inside.find(v1) != inside.end())
-                        springs.insert(pair<int,int>(min(v0,v1), max(v0,v1)));
+                        springs.insert(pair<int, int>(min(v0, v1), max(v0, v1)));
                 }
             }
         }
 
         // setup default values for links
         cGELSkeletonLink::s_default_kSpringElongation = 100.0; // [N/m]
-        cGELSkeletonLink::s_default_kSpringFlexion    = 0.1;   // [Nm/RAD]
-        cGELSkeletonLink::s_default_kSpringTorsion    = 0.1;   // [Nm/RAD]
+        cGELSkeletonLink::s_default_kSpringFlexion = 0.1;      // [Nm/RAD]
+        cGELSkeletonLink::s_default_kSpringTorsion = 0.1;      // [Nm/RAD]
         cGELSkeletonLink::s_default_color.set(0.2, 0.2, 1.0);
 
-        for (set< pair<int,int> >::iterator it = springs.begin(); it != springs.end(); ++it)
+        for (set<pair<int, int>>::iterator it = springs.begin(); it != springs.end(); ++it)
         {
             unsigned int vertexIndex0 = 0;
             unsigned int vertexIndex1 = 0;
-            cMesh* mesh0 = NULL;
-            cMesh* mesh1 = NULL;
+            cMesh *mesh0 = NULL;
+            cMesh *mesh1 = NULL;
 
             model->getVertex(it->first, mesh0, vertexIndex0);
             model->getVertex(it->second, mesh1, vertexIndex1);
-            cGELSkeletonNode* n0 = nodes[mesh0->m_vertices->getUserData(vertexIndex0)];
-            cGELSkeletonNode* n1 = nodes[mesh1->m_vertices->getUserData(vertexIndex1)];
-            cGELSkeletonLink* newLink = new cGELSkeletonLink(n0, n1);
+            cGELSkeletonNode *n0 = nodes[mesh0->m_vertices->getUserData(vertexIndex0)];
+            cGELSkeletonNode *n1 = nodes[mesh1->m_vertices->getUserData(vertexIndex1)];
+            cGELSkeletonLink *newLink = new cGELSkeletonLink(n0, n1);
             a_object->m_links.push_front(newLink);
         }
 
@@ -838,7 +830,7 @@ bool createSkeletonMesh(cGELMesh *a_object, char *a_filename, char *a_filenameHi
 
 //---------------------------------------------------------------------------
 
-void windowSizeCallback(GLFWwindow* a_window, int a_width, int a_height)
+void windowSizeCallback(GLFWwindow *a_window, int a_width, int a_height)
 {
     // update window size
     width = a_width;
@@ -847,14 +839,14 @@ void windowSizeCallback(GLFWwindow* a_window, int a_width, int a_height)
 
 //------------------------------------------------------------------------------
 
-void errorCallback(int a_error, const char* a_description)
+void errorCallback(int a_error, const char *a_description)
 {
     cout << "Error: " << a_description << endl;
 }
 
 //---------------------------------------------------------------------------
 
-void keyCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, int a_mods)
+void keyCallback(GLFWwindow *a_window, int a_key, int a_scancode, int a_action, int a_mods)
 {
     // filter calls that only include a key press
     if ((a_action != GLFW_PRESS) && (a_action != GLFW_REPEAT))
@@ -890,10 +882,10 @@ void keyCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, 
         fullscreen = !fullscreen;
 
         // get handle to monitor
-        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        GLFWmonitor *monitor = glfwGetPrimaryMonitor();
 
         // get information about monitor
-        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
         // set fullscreen or window mode
         if (fullscreen)
@@ -928,7 +920,10 @@ void close(void)
     simulationRunning = false;
 
     // wait for graphics and haptics loops to terminate
-    while (!simulationFinished) { cSleepMs(100); }
+    while (!simulationFinished)
+    {
+        cSleepMs(100);
+    }
 
     // close haptic device
     hapticDevice->close();
@@ -949,11 +944,10 @@ void updateGraphics(void)
 
     // update haptic and graphic rate data
     labelRates->setText(cStr(freqCounterGraphics.getFrequency(), 0) + " Hz / " +
-        cStr(freqCounterHaptics.getFrequency(), 0) + " Hz");
+                        cStr(freqCounterHaptics.getFrequency(), 0) + " Hz");
 
     // update position of label
     labelRates->setLocalPos((int)(0.5 * (width - labelRates->getWidth())), 15);
-
 
     /////////////////////////////////////////////////////////////////////
     // UPDATE DEFORMABLE MODELS
@@ -961,7 +955,6 @@ void updateGraphics(void)
 
     // update skins deformable objects
     defWorld->updateSkins(true);
-
 
     /////////////////////////////////////////////////////////////////////
     // RENDER SCENE
@@ -979,7 +972,8 @@ void updateGraphics(void)
     // check for any OpenGL errors
     GLenum err;
     err = glGetError();
-    if (err != GL_NO_ERROR) cout << "Error: " << gluErrorString(err) << endl;
+    if (err != GL_NO_ERROR)
+        cout << "Error: " << gluErrorString(err) << endl;
 }
 
 //---------------------------------------------------------------------------
@@ -994,12 +988,11 @@ void updateHaptics(void)
     double time = 0.0;
 
     // simulation in now running
-    simulationRunning  = true;
+    simulationRunning = true;
     simulationFinished = false;
 
-
     // main haptic simulation loop
-    while(simulationRunning)
+    while (simulationRunning)
     {
         // stop clock
         double interval = 0.001; // cMin(0.001, clock.stop());
@@ -1020,46 +1013,46 @@ void updateHaptics(void)
         cVector3d force(0.0, 0.0, 0.0);
 
         // compute reaction forces
-        list<cGELMesh*>::iterator i;
+        list<cGELMesh *>::iterator i;
 
         // model water groundLevel
-        for(i = defWorld->m_gelMeshes.begin(); i != defWorld->m_gelMeshes.end(); ++i)
+        for (i = defWorld->m_gelMeshes.begin(); i != defWorld->m_gelMeshes.end(); ++i)
         {
             cGELMesh *nextItem = *i;
 
             if (nextItem->m_useMassParticleModel)
             {
                 int numVertices = (int)(nextItem->m_gelVertices.size());
-                for (int i=0; i<numVertices; i++)
+                for (int i = 0; i < numVertices; i++)
                 {
-                   cVector3d nodePos = nextItem->m_gelVertices[i].m_massParticle->m_pos;
+                    cVector3d nodePos = nextItem->m_gelVertices[i].m_massParticle->m_pos;
 
-                   double forceWave = 0.001 * sin(1.0 * (time + nodePos.x() + nodePos.y()));
+                    double forceWave = 0.001 * sin(1.0 * (time + nodePos.x() + nodePos.y()));
 
-                   cVector3d force = cVector3d(-0.002 * nodePos.x(), -0.002 * nodePos.y(), forceWave);
-                   if (nodePos.z() < groundLevel)
-                   {
+                    cVector3d force = cVector3d(-0.002 * nodePos.x(), -0.002 * nodePos.y(), forceWave);
+                    if (nodePos.z() < groundLevel)
+                    {
                         double depth = nodePos.z() - groundLevel;
-                        force.add(cVector3d(0,0,-100*depth));
-                   }
-                   nextItem->m_gelVertices[i].m_massParticle->setExternalForce(force);
+                        force.add(cVector3d(0, 0, -100 * depth));
+                    }
+                    nextItem->m_gelVertices[i].m_massParticle->setExternalForce(force);
                 }
             }
 
             if (nextItem->m_useSkeletonModel)
             {
-                list<cGELSkeletonNode*>::iterator i;
-                for(i = nextItem->m_nodes.begin(); i != nextItem->m_nodes.end(); ++i)
+                list<cGELSkeletonNode *>::iterator i;
+                for (i = nextItem->m_nodes.begin(); i != nextItem->m_nodes.end(); ++i)
                 {
-                    cGELSkeletonNode* node = *i;
+                    cGELSkeletonNode *node = *i;
                     cVector3d nodePos = node->m_pos;
                     double radius = node->m_radius;
                     cVector3d force = cVector3d(-0.01 * nodePos.x(), -0.01 * (nodePos.y()), 0.0);
 
-                    if ((nodePos.z()-radius) < groundLevel)
+                    if ((nodePos.z() - radius) < groundLevel)
                     {
-                        double depth = (nodePos.z()-radius) - groundLevel;
-                        force.add(cVector3d(0,0,-1.0 * depth));
+                        double depth = (nodePos.z() - radius) - groundLevel;
+                        force.add(cVector3d(0, 0, -1.0 * depth));
                         node->m_vel.mul(0.95);
                     }
 
@@ -1072,32 +1065,32 @@ void updateHaptics(void)
         }
 
         // compute haptic feedback
-        for(i = defWorld->m_gelMeshes.begin(); i != defWorld->m_gelMeshes.end(); ++i)
+        for (i = defWorld->m_gelMeshes.begin(); i != defWorld->m_gelMeshes.end(); ++i)
         {
             cGELMesh *nextItem = *i;
 
             if (nextItem->m_useMassParticleModel)
             {
                 int numVertices = (int)(nextItem->m_gelVertices.size());
-                for (int i=0; i<numVertices; i++)
+                for (int i = 0; i < numVertices; i++)
                 {
-                cVector3d nodePos = nextItem->m_gelVertices[i].m_massParticle->m_pos;
-                cVector3d f = computeForce(pos, deviceRadius, nodePos, radius, stiffness);
-                if (f.lengthsq() > 0)
-                {
-                    cVector3d tmpfrc = cNegate(f);
-                    nextItem->m_gelVertices[i].m_massParticle->setExternalForce(tmpfrc);
-                }
-                force.add(cMul(1.0, f));
+                    cVector3d nodePos = nextItem->m_gelVertices[i].m_massParticle->m_pos;
+                    cVector3d f = computeForce(pos, deviceRadius, nodePos, radius, stiffness);
+                    if (f.lengthsq() > 0)
+                    {
+                        cVector3d tmpfrc = cNegate(f);
+                        nextItem->m_gelVertices[i].m_massParticle->setExternalForce(tmpfrc);
+                    }
+                    force.add(cMul(1.0, f));
                 }
             }
 
             if (nextItem->m_useSkeletonModel)
             {
-                list<cGELSkeletonNode*>::iterator i;
-                for(i = nextItem->m_nodes.begin(); i != nextItem->m_nodes.end(); ++i)
+                list<cGELSkeletonNode *>::iterator i;
+                for (i = nextItem->m_nodes.begin(); i != nextItem->m_nodes.end(); ++i)
                 {
-                    cGELSkeletonNode* node = *i;
+                    cGELSkeletonNode *node = *i;
                     cVector3d nodePos = node->m_pos;
                     double radius = node->m_radius;
                     cVector3d f = computeForce(pos, deviceRadius, nodePos, radius, stiffness);
@@ -1110,7 +1103,7 @@ void updateHaptics(void)
                 }
             }
         }
-        
+
         // integrate dynamics
         defWorld->updateDynamics(interval);
 
@@ -1151,9 +1144,9 @@ void updateHaptics(void)
 
 //---------------------------------------------------------------------------
 
-cVector3d computeForce(const cVector3d& a_cursor,
+cVector3d computeForce(const cVector3d &a_cursor,
                        double a_cursorRadius,
-                       const cVector3d& a_spherePos,
+                       const cVector3d &a_spherePos,
                        double a_radius,
                        double a_stiffness)
 {
@@ -1177,7 +1170,7 @@ cVector3d computeForce(const cVector3d& a_cursor,
     // compute penetration distance between tool and surface of sphere
     double penetrationDistance = (a_cursorRadius + a_radius) - vSphereCursor.length();
     cVector3d forceDirection = cNormalize(vSphereCursor);
-    force = cMul( penetrationDistance * a_stiffness, forceDirection);
+    force = cMul(penetrationDistance * a_stiffness, forceDirection);
 
     // return result
     return (force);

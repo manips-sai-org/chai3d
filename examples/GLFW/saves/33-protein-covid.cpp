@@ -1,46 +1,3 @@
-//===========================================================================
-/*
-    Software License Agreement (BSD License)
-    Copyright (c) 2003-2016, CHAI3D
-    (www.chai3d.org)
-
-    All rights reserved.
-
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions
-    are met:
-
-    * Redistributions of source code must retain the above copyright
-    notice, this list of conditions and the following disclaimer.
-
-    * Redistributions in binary form must reproduce the above
-    copyright notice, this list of conditions and the following
-    disclaimer in the documentation and/or other materials provided
-    with the distribution.
-
-    * Neither the name of CHAI3D nor the names of its contributors may
-    be used to endorse or promote products derived from this software
-    without specific prior written permission.
-
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-    FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-    COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-    BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-    ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-    POSSIBILITY OF SUCH DAMAGE.
-
-    \author    <http://www.chai3d.org>
-    \author    Francois Conti
-    \version   3.2.0 $Rev: 2007 $
-*/
-//===========================================================================
-
 //------------------------------------------------------------------------------
 #include "chai3d.h"
 //------------------------------------------------------------------------------
@@ -90,8 +47,8 @@ cHapticDeviceHandler *handler;
 // a pointer to the current haptic device
 shared_ptr<cGenericHapticDevice> hapticDevice;
 
-// a virtual tool representing the haptic device in the scene
-cToolCursor *tool;
+// a virtual vaccine representing the haptic device in the scene
+cToolCursor *vaccine;
 
 // a label to display the rate [Hz] at which the simulation is running
 cLabel *labelRates;
@@ -101,8 +58,10 @@ double linGain = 0.2;
 double angGain = 0.03;
 double linG;
 double angG;
-double linStiffness = 1300;
+double linStiffness = 800;
 double angStiffness = 30;
+
+double currentForceMag = 0.0;
 
 //---------------------------------------------------------------------------
 // ODE MODULE VARIABLES
@@ -112,8 +71,16 @@ double angStiffness = 30;
 cODEWorld *ODEWorld;
 
 // ODE objects
-cODEGenericBody *ODETeeth;
-cODEGenericBody *ODETool;
+cODEGenericBody *ODESpike;
+cODEGenericBody *ODEVaccine;
+
+//---------------------------------------------------------------------------
+// AUDIO VARIABLES
+//---------------------------------------------------------------------------
+cAudioDevice *audioDevice;
+cAudioBuffer *audioBufferImpact;
+cAudioSource *audioSourceSpike;
+bool spikeContactActive = false;
 
 //---------------------------------------------------------------------------
 // GENERAL VARIABLES
@@ -124,8 +91,6 @@ bool simulationRunning = false;
 
 // flag to indicate if the haptic simulation has terminated
 bool simulationFinished = true;
-
-bool goalReached = false;
 
 // a frequency counter to measure the simulation graphic rate
 cFrequencyCounter freqCounterGraphics;
@@ -150,8 +115,6 @@ int swapInterval = 1;
 
 // root resource path
 string resourceRoot;
-
-cBackground *background;
 
 //---------------------------------------------------------------------------
 // DECLARED MACROS
@@ -187,7 +150,7 @@ void close(void);
 
     This example illustrates the use of the ODE framework for simulating
     haptic interaction with dynamic bodies. In this scene we demonstrate a
-    dental application where a drill is interacting with a set of teeth.
+    dental application where a drill is interacting with a set of spike.
  */
 //===========================================================================
 
@@ -200,8 +163,8 @@ int main(int argc, char *argv[])
     cout << endl;
     cout << "-----------------------------------" << endl;
     cout << "CHAI3D" << endl;
-    cout << "Demo: 05-ODE-dental" << endl;
-    cout << "Copyright 2003-2016" << endl;
+    cout << "Demo: Covid demo" << endl;
+    cout << "Enzo Andreacchio" << endl;
     cout << "-----------------------------------" << endl
          << endl
          << endl;
@@ -312,7 +275,7 @@ int main(int argc, char *argv[])
 
     // set the background color of the environment
     // the color is defined by its (R,G,B) components.
-    world->setBackgroundColor(0.0, 0.0, 0.0);
+    world->setBackgroundColor(1.0, 1.0, 1.0);
 
     // create a camera and insert it into the virtual world
     camera = new cCamera(world);
@@ -341,22 +304,19 @@ int main(int argc, char *argv[])
     light = new cSpotLight(world);
 
     // attach light to camera
-    // world->addChild(light);
-    camera->addChild(light);
-    light->setLocalPos(0.0, -1.0, 0.0);
-    light->setDir(-1.0, 0.5, 0.0);
+    world->addChild(light);
 
     // enable light source
     light->setEnabled(true);
 
-    // position the light source to the LEFT of the scene
-    // light->setLocalPos(-2.0, 2.0, 1.0);
+    // position the light source
+    light->setLocalPos(2.0, 0.0, 1.0);
 
-    // // make it shine toward the right and downward
-    // light->setDir(2.0, -2.0, -1.0);
+    // define the direction of the light beam
+    light->setDir(-2.0, 0.0, -1.0);
 
     // set uniform concentration level of light
-    light->setSpotExponent(10.0);
+    light->setSpotExponent(1.0);
 
     // enable this light source to generate shadows
     light->setShadowMapEnabled(false);
@@ -381,34 +341,34 @@ int main(int argc, char *argv[])
     // retrieve information about the current haptic device
     cHapticDeviceInfo hapticDeviceInfo = hapticDevice->getSpecifications();
 
-    // create a 3D tool and add it to the world
-    tool = new cToolCursor(world);
-    world->addChild(tool);
+    // create a 3D vaccine and add it to the world
+    vaccine = new cToolCursor(world);
+    world->addChild(vaccine);
 
-    // connect the haptic device to the tool
-    tool->setHapticDevice(hapticDevice);
+    // connect the haptic device to the vaccine
+    vaccine->setHapticDevice(hapticDevice);
 
-    tool->setWaitForSmallForce(false);
+    vaccine->setWaitForSmallForce(false);
 
-    // initialize tool by connecting to haptic device
-    tool->start();
+    // initialize vaccine by connecting to haptic device
+    vaccine->start();
 
     // map the physical workspace of the haptic device to a larger virtual workspace.
-    tool->setWorkspaceRadius(1.3);
+    vaccine->setWorkspaceRadius(1.3);
 
-    // define a radius for the tool
-    tool->setRadius(0.0);
+    // define a radius for the vaccine
+    vaccine->setRadius(0.0);
 
     // hide the device sphere. only show proxy.
-    tool->setShowContactPoints(false, false);
+    vaccine->setShowContactPoints(false, false);
 
     // haptic forces are enabled only if small forces are first sent to the device;
     // this mode avoids the force spike that occurs when the application starts when
-    // the tool is located inside an object for instance.
-    tool->setWaitForSmallForce(true);
+    // the vaccine is located inside an object for instance.
+    vaccine->setWaitForSmallForce(true);
 
-    // start the haptic tool
-    tool->start();
+    // start the haptic vaccine
+    vaccine->start();
 
     //--------------------------------------------------------------------------
     // WIDGETS
@@ -423,8 +383,23 @@ int main(int argc, char *argv[])
     camera->m_frontLayer->addChild(labelRates);
 
     // create a background
-    background = new cBackground();
-    camera->m_backLayer->addChild(background);
+    cBackground *background = new cBackground();
+    // camera->m_backLayer->addChild(background);
+
+    // load a texture file
+    bool fileloadBackground = background->loadFromFile(RESOURCE_PATH("../resources/images/covid_bg.jpg"));
+    if (!fileloadBackground)
+    {
+#if defined(_MSVC)
+        fileloadBackground = background->loadFromFile("../../../bin/resources/images/earth.jpg");
+#endif
+    }
+    if (!fileloadBackground)
+    {
+        cout << "Error - Image failed to load correctly." << endl;
+        close();
+        return (-1);
+    }
 
     // set background properties
     background->setCornerColors(cColorf(1.0f, 1.0f, 1.0f),
@@ -437,8 +412,8 @@ int main(int argc, char *argv[])
     //-----------------------------------------------------------------------
 
     // read the scale factor between the physical workspace of the haptic
-    // device and the virtual workspace defined for the tool
-    double workspaceScaleFactor = tool->getWorkspaceScaleFactor();
+    // device and the virtual workspace defined for the vaccine
+    double workspaceScaleFactor = vaccine->getWorkspaceScaleFactor();
 
     // stiffness properties
     double maxStiffness = hapticDeviceInfo.m_maxLinearStiffness / workspaceScaleFactor;
@@ -456,79 +431,98 @@ int main(int argc, char *argv[])
     ODEWorld->setGravity(cVector3d(0.0, 0.0, 0.0));
 
     // create a new ODE object that is automatically added to the ODE world
-    ODETeeth = new cODEGenericBody(ODEWorld);
+    ODESpike = new cODEGenericBody(ODEWorld);
 
     // create a virtual mesh  that will be used for the geometry
     // representation of the dynamic body
-    cMultiMesh *imgTeeth = new cMultiMesh();
+    cMultiMesh *imgSpike = new cMultiMesh();
 
     // load model
     bool fileload;
-    // fileload = imgTeeth->loadFromFile(RESOURCE_PATH("../resources/models/dental/teeth-bottom.3ds"));
-    fileload = imgTeeth->loadFromFile(RESOURCE_PATH("../resources/models/feel/spike_new_painted.obj"));
+    // fileload = imgSpike->loadFromFile(RESOURCE_PATH("../resources/models/dental/spike-bottom.3ds"));
+    fileload = imgSpike->loadFromFile(RESOURCE_PATH("../resources/models/feel/spike/spike_new.obj"));
     if (!fileload)
     {
+        cout << "ERRROR - 3D Model failed to load correctly." << endl;
 #if defined(_MSVC)
-        fileload = imgTeeth->loadFromFile("../../../bin/resources/models/dental/teeth-bottom.3ds");
+        fileload = imgSpike->loadFromFile("../../../bin/resources/models/dental/spike-bottom.3ds");
 #endif
     }
 
     // scale object
-    // imgTeeth->scale(0.01);
-    imgTeeth->scale(0.07);
+    // imgSpike->scale(0.004);
+    // imgSpike->scale(0.01);
+    imgSpike->scale(0.05);
 
     // create collision detetctor
-    imgTeeth->createAABBCollisionDetector(0.0);
+    imgSpike->createAABBCollisionDetector(0.0);
 
     // assign haptic properties
-    cMaterial matTeeth;
-    matTeeth.setStiffness(0.8 * maxStiffness);
-    matTeeth.setHapticTriangleSides(true, false);
-    imgTeeth->setMaterial(matTeeth);
+    cMaterial matSpike;
+    matSpike.setStiffness(0.3 * maxStiffness);
+    matSpike.setHapticTriangleSides(true, false);
+    matSpike.setShininess(1.0);
+    // imgSpike->setMaterial(matSpike, true);
+
+    // light->setShadowMapEnabled(false);
 
     // add mesh to ODE object
-    ODETeeth->setImageModel(imgTeeth);
+    ODESpike->setImageModel(imgSpike);
 
     // create a dynamic model of the ODE object. Here we decide to use a box just like
     // the object mesh we just defined
-    ODETeeth->createDynamicMesh(true);
+    ODESpike->createDynamicMesh(true);
 
     // position and orient model
-    ODETeeth->setLocalPos(0.0, 0.0, -0.3);
-    ODETeeth->rotateAboutGlobalAxisDeg(cVector3d(0, 0, 1), -60);
-    // ODETeeth->rotateAboutGlobalAxisDeg(cVector3d(0, 1, 0), 20);
+    ODESpike->setLocalPos(0.0, 0.0, -0.3);
+    // ODESpike->rotateAboutGlobalAxisDeg(cVector3d(0, 0, 1), 90);
+    // ODESpike->rotateAboutGlobalAxisDeg(cVector3d(0, 1, 0), 20);
 
-    // create a virtual tool
-    ODETool = new cODEGenericBody(ODEWorld);
-    cMultiMesh *imgTool = new cMultiMesh();
+    // 1. Create a quaternion from your axis-angle
+    cQuaternion quat;
+    cVector3d axis(-0.669, -0.569, 0.478);
+    double angleDeg = 68.4526;
+    quat.fromAxisAngle(axis, cDegToRad(angleDeg)); // axis-angle -> quaternion
 
-    // fileload = imgTool->loadFromFile(RESOURCE_PATH("../resources/models/dental/drill.obj"));
-    fileload = imgTool->loadFromFile(RESOURCE_PATH("../resources/models/feel/vaccine_new_painted.obj"));
+    // 2. Convert quaternion to rotation matrix
+    cMatrix3d rot;
+    quat.toRotMat(rot);
+
+    // 3. Apply rotation matrix to spike
+    ODESpike->setLocalRot(rot);
+
+    // dBodySetAngularDamping(ODESpike->m_ode_body, 0.3);
+    // dBodySetLinearDamping(ODESpike->m_ode_body, 0.1);
+
+    // create a virtual vaccine
+    ODEVaccine = new cODEGenericBody(ODEWorld);
+    cMultiMesh *imgVaccine = new cMultiMesh();
+
+    // fileload = imgVaccine->loadFromFile(RESOURCE_PATH("../resources/models/dental/drill.obj"));
+    fileload = imgVaccine->loadFromFile(RESOURCE_PATH("../resources/models/feel/vaccine/vaccine_new.obj"));
     if (!fileload)
     {
 #if defined(_MSVC)
-        fileload = imgTool->loadFromFile("../../../bin/resources/models/dental/drill.obj");
+        fileload = imgVaccine->loadFromFile("../../../bin/resources/models/dental/drill.obj");
 #endif
     }
-    // imgTool->scale(0.01);
-    imgTool->scale(0.07);
+    // imgVaccine->scale(0.01);
+    imgVaccine->scale(0.05);
 
     // define some material properties for each cube
-    cMaterial matTool;
-    matTool.setGrayLevel(0.5);
-    // imgTool->setMaterial(matTool, true);
-    imgTool->setHapticEnabled(false);
+    cMaterial matVaccine;
+    matVaccine.setGrayLevel(0.5);
+    // imgVaccine->setMaterial(matVaccine, true);
+    imgVaccine->setHapticEnabled(false);
 
     // add mesh to ODE object
-    ODETool->setImageModel(imgTool);
-    ODETool->createDynamicMesh(false);
-
-    ODETool->rotateAboutGlobalAxisDeg(cVector3d(1, 0, 0), 90);
+    ODEVaccine->setImageModel(imgVaccine);
+    ODEVaccine->createDynamicMesh(false);
 
     // define some mass properties for each cube
-    ODETool->setMass(0.01);
-    dBodySetAngularDamping(ODETool->m_ode_body, 0.06);
-    dBodySetLinearDamping(ODETool->m_ode_body, 0.06);
+    ODEVaccine->setMass(0.01);
+    dBodySetAngularDamping(ODEVaccine->m_ode_body, 0.06);
+    dBodySetLinearDamping(ODEVaccine->m_ode_body, 0.06);
 
     //-----------------------------------------------------------------------
     // START SIMULATION
@@ -792,25 +786,6 @@ void updateGraphics(void)
     // RENDER SCENE
     /////////////////////////////////////////////////////////////////////
 
-    // change background color based on goal status
-    if (goalReached)
-    {
-        background->setCornerColors(
-            cColorf(0.0f, 1.0f, 0.0f), // bright green top-left
-            cColorf(0.0f, 1.0f, 0.0f), // bright green top-right
-            cColorf(0.0f, 0.8f, 0.0f), // slightly darker bottom-left
-            cColorf(0.0f, 0.8f, 0.0f)  // slightly darker bottom-right
-        );
-    }
-    else
-    {
-        background->setCornerColors(
-            cColorf(1.0f, 1.0f, 1.0f),
-            cColorf(1.0f, 1.0f, 1.0f),
-            cColorf(0.8f, 0.8f, 0.8f),
-            cColorf(0.8f, 0.8f, 0.8f));
-    }
-
     // update shadow maps (if any)
     world->updateShadowMaps(false, mirroredDisplay);
 
@@ -837,8 +812,8 @@ void updateHaptics(void)
     cPrecisionClock simClock;
     simClock.start(true);
 
-    cMatrix3d prevRotTool;
-    prevRotTool.identity();
+    cMatrix3d prevRotVaccine;
+    prevRotVaccine.identity();
 
     // main haptic simulation loop
     while (simulationRunning)
@@ -848,7 +823,7 @@ void updateHaptics(void)
 
         // retrieve simulation time and compute next interval
         double time = simClock.getCurrentTimeSeconds();
-        double nextSimInterval = 0.0005; // cClamp(time, 0.00001, 0.0002);
+        double nextSimInterval = 0.0001; // cClamp(time, 0.00001, 0.0002);
 
         // reset clock
         simClock.reset();
@@ -857,71 +832,50 @@ void updateHaptics(void)
         // compute global reference frames for each object
         world->computeGlobalPositions(true);
 
-        // update position and orientation of tool
-        tool->updateFromDevice();
+        // update position and orientation of vaccine
+        vaccine->updateFromDevice();
 
         // compute interaction forces
-        tool->computeInteractionForces();
+        vaccine->computeInteractionForces();
 
-        // update position and orientation of tool
+        // update position and orientation of vaccine
         cVector3d posDevice;
         cMatrix3d rotDevice;
         // hapticDevice->getPosition(posDevice);
         // hapticDevice->getRotation(rotDevice);
-        posDevice = tool->m_hapticPoint->getGlobalPosProxy();
-        rotDevice = tool->getDeviceGlobalRot();
+        posDevice = vaccine->m_hapticPoint->getGlobalPosProxy();
+        rotDevice = vaccine->getDeviceGlobalRot();
 
-        // read position of tool
-        cVector3d posTool = ODETool->getLocalPos();
-        cMatrix3d rotTool = ODETool->getLocalRot();
+        // read position of vaccine
+        cVector3d posVaccine = ODEVaccine->getLocalPos();
+        cMatrix3d rotVaccine = ODEVaccine->getLocalRot();
 
-        cVector3d posGoal = cVector3d(0.0485097, -0.139772, -0.338828);
-        cMatrix3d rotGoal = cMatrix3d(cVector3d(0.79, -0.61, -0.09), cVector3d(0.59, 0.79, -0.18), cVector3d(0.18, 0.09, 0.98));
-
-        cMatrix3d rotDiff = cTranspose(rotTool) * rotGoal;
-
-        cVector3d axis2;
-        double angle2;
-        rotDiff.toAxisAngle(axis2, angle2);
-
-        float errorPos = (posTool - posGoal).length();
-        float errorAngle = fabs(angle2);
-
-        if ((posTool - posGoal).length() < 0.02 && fabs(angle2) < 0.3)
-        {
-            goalReached = true;
-        }
-        else
-        {
-            goalReached = false;
-        }
-
-        // compute position and angular error between tool and haptic device
-        cVector3d deltaPos = (posDevice - posTool);
-        cMatrix3d deltaRot = cMul(cTranspose(rotTool), rotDevice);
+        // compute position and angular error between vaccine and haptic device
+        cVector3d deltaPos = (posDevice - posVaccine);
+        cMatrix3d deltaRot = cMul(cTranspose(rotVaccine), rotDevice);
         double angle;
         cVector3d axis;
         deltaRot.toAxisAngle(axis, angle);
 
-        // compute force and torque to apply to tool
+        // compute force and torque to apply to vaccine
         cVector3d force, torque;
         force = linStiffness * deltaPos;
-        ODETool->addExternalForce(force);
+        ODEVaccine->addExternalForce(force);
 
         torque = cMul((angStiffness * angle), axis);
-        rotTool.mul(torque);
-        ODETool->addExternalTorque(torque);
+        rotVaccine.mul(torque);
+        ODEVaccine->addExternalTorque(torque);
 
         // compute force and torque to apply to haptic device
         force = -linG * force;
         torque = -angG * torque;
 
         // add force contribution from ODE model
-        tool->addDeviceGlobalForce(force);
-        tool->addDeviceGlobalTorque(torque);
+        vaccine->addDeviceGlobalForce(force);
+        vaccine->addDeviceGlobalTorque(torque);
 
         // send forces to haptic device.
-        tool->applyToDevice();
+        vaccine->applyToDevice();
 
         if (linG < linGain)
         {
@@ -940,6 +894,38 @@ void updateHaptics(void)
         {
             angG = angGain;
         }
+
+        //-----------------------------------------------------------------------
+        // SPRING FORCE TO KEEP SPIKE NEAR ORIGIN
+        //-----------------------------------------------------------------------
+
+        // get position
+        cVector3d posSpike = ODESpike->getLocalPos();
+
+        // print spike position and orientation
+        // cMatrix3d rotSpike = ODESpike->getLocalRot();
+        // cVector3d axis2;
+        // double angle2;
+        // rotSpike.toAxisAngle(axis2, angle2);
+        // cout << "Spike Position: " << posSpike.str(3)
+        //      << " | Axis: " << axis2.str(3)
+        //      << " | Angle (deg): " << cRadToDeg(angle2) << endl;
+
+        // get linear velocity from ODE
+        const dReal *v = dBodyGetLinearVel(ODESpike->m_ode_body);
+        cVector3d velSpike(v[0], v[1], v[2]);
+
+        // spring parameters
+        const double K_spring = 200.0; // stiffness
+        const double D_damping = 30.0; // damping
+
+        // compute spring force
+        cVector3d springForce = -K_spring * posSpike - D_damping * velSpike;
+
+        currentForceMag = vaccine->getDeviceLocalForce().length();
+
+        // apply to ODE body
+        // ODESpike->addExternalForce(springForce);
 
         // update simulation
         ODEWorld->updateDynamics(nextSimInterval);

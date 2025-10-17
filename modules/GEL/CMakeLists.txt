@@ -42,11 +42,11 @@
 # project configuration
 #
 
-cmake_minimum_required (VERSION 3.0.0)
+cmake_minimum_required (VERSION 3.10)
 project (CHAI3D-GEL)
 
 # set version info
-file (READ ${PROJECT_SOURCE_DIR}/src/version VERSION)
+file (READ ${PROJECT_SOURCE_DIR}/cmake/version VERSION)
 STRING (REGEX REPLACE ".*MAJOR=([0-9]+).*" "\\1" MAJOR_VERSION "${VERSION}")
 STRING (REGEX REPLACE ".*MINOR=([0-9]+).*" "\\1" MINOR_VERSION "${VERSION}")
 STRING (REGEX REPLACE ".*RELEASE=([0-9]+).*" "\\1" RELEASE_VERSION "${VERSION}")
@@ -89,6 +89,9 @@ find_package (CHAI3D 3.2 REQUIRED)
 include_directories (${CHAI3D_INCLUDE_DIRS})
 link_directories (${CHAI3D_LIBRARY_DIRS})
 add_definitions (${CHAI3D_DEFINITIONS})
+
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIRS})
 
 # optional settings
 include (${PROJECT_SOURCE_DIR}/CMakeOptions.txt OPTIONAL)

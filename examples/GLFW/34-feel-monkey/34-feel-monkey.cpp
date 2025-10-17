@@ -1,45 +1,4 @@
-//==============================================================================
-/*
-    Software License Agreement (BSD License)
-    Copyright (c) 2003-2016, CHAI3D.
-    (www.chai3d.org)
 
-    All rights reserved.
-
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions
-    are met:
-
-    * Redistributions of source code must retain the above copyright
-    notice, this list of conditions and the following disclaimer.
-
-    * Redistributions in binary form must reproduce the above
-    copyright notice, this list of conditions and the following
-    disclaimer in the documentation and/or other materials provided
-    with the distribution.
-
-    * Neither the name of CHAI3D nor the names of its contributors may
-    be used to endorse or promote products derived from this software
-    without specific prior written permission.
-
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-    FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-    COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-    BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-    ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-    POSSIBILITY OF SUCH DAMAGE.
-
-    \author    <http://www.chai3d.org>
-    \author    Francois Conti
-    \version   3.2.0 $Rev: 2049 $
-*/
-//==============================================================================
 
 //------------------------------------------------------------------------------
 #include "chai3d.h"
@@ -99,9 +58,11 @@ cBackground *background;
 
 // a font for rendering text
 cFontPtr font;
+cFontPtr fontSelection;
 
 // a label to display the rate [Hz] at which the simulation is running
 cLabel *labelRates;
+cLabel *labelSelection;
 
 // a flag that indicates if the haptic simulation is currently running
 bool simulationRunning = false;
@@ -175,18 +136,7 @@ void close(void);
 
 //==============================================================================
 /*
-    DEMO:   21-object.cpp
-
-    This demonstration loads a 3D mesh file by using the file loader
-    functionality of the \ref cMultiMesh class. A finger-proxy algorithm is
-    used to render the forces. Take a look at this example to understand the
-    different functionalities offered by the tool force renderer.
-
-    In the main haptics loop function  "updateHaptics()" , the position
-    of the haptic device is retrieved at each simulation iteration.
-    The interaction forces are then computed and sent to the device.
-    Finally, a simple dynamics model is used to simulate the behavior
-    of the object.
+    DEMO:   34-feel-monkey
 */
 //==============================================================================
 
@@ -379,7 +329,7 @@ int main(int argc, char *argv[])
     hapticDevice->setEnableGripperUserSwitch(true);
 
     // define the radius of the tool (sphere)
-    double toolRadius = 0.01;
+    double toolRadius = 0.03;
 
     // define a radius for the tool
     tool->setRadius(toolRadius);
@@ -410,10 +360,12 @@ int main(int argc, char *argv[])
 
     // read the scale factor between the physical workspace of the haptic
     // device and the virtual workspace defined for the tool
+    tool->setWorkspaceScaleFactor(7.0);
     double workspaceScaleFactor = tool->getWorkspaceScaleFactor();
 
     // stiffness properties
     double maxStiffness = hapticDeviceInfo.m_maxLinearStiffness / workspaceScaleFactor;
+    double maxDamping = hapticDeviceInfo.m_maxLinearDamping / workspaceScaleFactor;
 
     // create a virtual mesh
     object = new cMultiMesh();
@@ -423,7 +375,7 @@ int main(int argc, char *argv[])
 
     // load an object file
     bool fileload;
-    fileload = object->loadFromFile(RESOURCE_PATH("../resources/models/leica/leica.3ds"));
+    fileload = object->loadFromFile(RESOURCE_PATH("../resources/models/feel/monkey/monkey_spacefill.obj"));
     if (!fileload)
     {
 #if defined(_MSVC)
@@ -465,11 +417,15 @@ int main(int argc, char *argv[])
     // define some haptic friction properties
     object->setFriction(0.1, 0.2, true);
 
+    object->m_material->setViscosity(0.5 * maxDamping);
+    object->createEffectViscosity();
+
     // enable display list for faster graphic rendering
     object->setUseDisplayList(true);
 
     // center object in scene
-    object->setLocalPos(-1.0 * object->getBoundaryCenter());
+    // object->setLocalPos(-1.0 * object->getBoundaryCenter());
+    object->setLocalPos(0, -0.1, -0.4);
 
     // rotate object in scene
     object->rotateExtrinsicEulerAnglesDeg(0, 0, 90, C_EULER_ORDER_XYZ);
@@ -492,6 +448,16 @@ int main(int argc, char *argv[])
     object->setShowEdges(showEdges);
     object->setShowNormals(showNormals);
 
+    int numMeshes = object->getNumMeshes();
+    for (int i = 0; i < numMeshes; ++i)
+    {
+        cMesh *sub = object->getMesh(i);
+        if (sub)
+        {
+            sub->m_name = "sub_mesh_" + std::to_string(i);
+        }
+    }
+
     //--------------------------------------------------------------------------
     // WIDGETS
     //--------------------------------------------------------------------------
@@ -502,11 +468,34 @@ int main(int argc, char *argv[])
     // create a label to display the haptic and graphic rate of the simulation
     labelRates = new cLabel(font);
     labelRates->m_fontColor.setBlack();
-    camera->m_frontLayer->addChild(labelRates);
+    // camera->m_frontLayer->addChild(labelRates);
+
+    fontSelection = cFont::create();
+    fontSelection->loadFromFile(RESOURCE_PATH("../resources/fonts/calibri-48.fnt"));
+
+    labelSelection = new cLabel(fontSelection);
+    labelSelection->m_fontColor.setBlack();
+    labelSelection->setText("");
+    camera->m_frontLayer->addChild(labelSelection);
 
     // create a background
     background = new cBackground();
     camera->m_backLayer->addChild(background);
+
+    // load a texture file
+    bool fileloadBackground = background->loadFromFile(RESOURCE_PATH("../resources/images/background_monkey.png"));
+    if (!fileloadBackground)
+    {
+#if defined(_MSVC)
+        fileloadBackground = background->loadFromFile("../../../bin/resources/images/earth.jpg");
+#endif
+    }
+    if (!fileloadBackground)
+    {
+        cout << "Error - Image failed to load correctly." << endl;
+        close();
+        return (-1);
+    }
 
     // set background properties
     background->setCornerColors(cColorf(0.95f, 0.95f, 0.95f),
@@ -741,10 +730,52 @@ void updateGraphics(void)
 
     // update position of label
     labelRates->setLocalPos((int)(0.5 * (width - labelRates->getWidth())), 15);
+    labelSelection->setLocalPos((int)(0.5 * (width - labelSelection->getWidth())), 15);
 
     /////////////////////////////////////////////////////////////////////
     // RENDER SCENE
     /////////////////////////////////////////////////////////////////////
+
+    int num_collisions = tool->m_hapticPoint->getNumCollisionEvents();
+    cCollisionEvent *collisionEvent = tool->m_hapticPoint->getCollisionEvent(0);
+    if (num_collisions > 0)
+    {
+        cGenericObject *object_in_collision = collisionEvent->m_object;
+        if (object_in_collision)
+        {
+            string name = object_in_collision->m_name;
+            if (name == "sub_mesh_0")
+            {
+                // tool->m_hapticPoint->m_sphereProxy->m_material->setBlueCornflower();
+                labelSelection->setText("Selecting: Nitrogen");
+                // also change the color of the text label
+                labelSelection->m_fontColor.setBlueCornflower();
+            }
+            else if (name == "sub_mesh_1")
+            {
+                // tool->m_hapticPoint->m_sphereProxy->m_material->setGreenLime();
+                labelSelection->setText("Selecting: Carbon");
+                labelSelection->m_fontColor.setGreenTeal();
+            }
+            else if (name == "sub_mesh_2")
+            {
+                // tool->m_hapticPoint->m_sphereProxy->m_material->setRedCrimson();
+                labelSelection->setText("Selecting: Oxygen");
+                labelSelection->m_fontColor.setRedDark();
+            }
+            else if (name == "sub_mesh_3")
+            {
+                // tool->m_hapticPoint->m_sphereProxy->m_material->setYellowGold();
+                labelSelection->setText("Selecting: Sulfur");
+                labelSelection->m_fontColor.setYellowGold();
+            }
+        }
+    }
+    else
+    {
+        // tool->m_hapticPoint->m_sphereProxy->m_material->setWhite();
+        labelSelection->setText("");
+    }
 
     // update shadow maps (if any)
     world->updateShadowMaps(false, mirroredDisplay);
@@ -765,19 +796,24 @@ void updateGraphics(void)
 
 enum cMode
 {
+    INIT,
     IDLE,
     SELECTION
 };
 
 void updateHaptics(void)
 {
-    cMode state = IDLE;
+    cMode state = INIT;
     cGenericObject *selectedObject = NULL;
     cTransform tool_T_object;
 
     // simulation in now running
     simulationRunning = true;
     simulationFinished = false;
+
+    // object->m_hapticEnabled = false;
+    // tool->m_hapticPoint->m_enabled = false;
+    object->setGhostEnabled(true);
 
     // main haptic simulation loop
     while (simulationRunning)
@@ -798,6 +834,10 @@ void updateHaptics(void)
         // compute interaction forces
         tool->computeInteractionForces();
 
+        // read current position and velocity
+        cVector3d position;
+        hapticDevice->getPosition(position);
+
         /////////////////////////////////////////////////////////////////////////
         // MANIPULATION
         /////////////////////////////////////////////////////////////////////////
@@ -808,11 +848,25 @@ void updateHaptics(void)
         // get status of user switch
         bool button = tool->getUserSwitch(0);
 
+        if (state == INIT)
+        {
+            // go to idle as soon as the position of the haptic device is valid:
+            // a valid position is if x>=0, |y| > 0.04, z >= 0.04 or z <= -0.055
+            if ((position.x() >= 0.0) ||
+                (fabs(position.y()) > 0.04) ||
+                (position.z() >= 0.04) ||
+                (position.z() <= -0.055))
+            {
+                state = IDLE;
+                object->setGhostEnabled(false);
+            }
+        }
+
         //
         // STATE 1:
         // Idle mode - user presses the user switch
         //
-        if ((state == IDLE) && (button == true))
+        else if ((state == IDLE) && (button == true))
         {
             // check if at least one contact has occurred
             if (tool->m_hapticPoint->getNumCollisionEvents() > 0)

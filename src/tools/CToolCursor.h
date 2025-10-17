@@ -33,7 +33,7 @@
     CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-    POSSIBILITY OF SUCH DAMAGE. 
+    POSSIBILITY OF SUCH DAMAGE.
 
     \author    <http://www.chai3d.org>
     \author    Francois Conti
@@ -50,78 +50,73 @@
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
-namespace chai3d {
-//------------------------------------------------------------------------------
-
-//==============================================================================
-/*!
-    \file       CToolCursor.h
-    
-    \brief  
-    Implements a tool cursor using a single haptic point.
-*/
-//==============================================================================
-
-//==============================================================================
-/*!
-    \class      cToolCursor
-    \ingroup    tools
-
-    \brief
-    This class implements a cursor using a single haptic point.
-
-    \details
-    cToolCursor implements a single point contact haptic tool that can 
-    apply forces in  three degrees of freedom and maintains three or 
-    six degrees of device pose. \n
-*/
-//==============================================================================
-class cToolCursor : public cGenericTool
+namespace chai3d
 {
-    //--------------------------------------------------------------------------
-    // CONSTRUCTOR & DESTRUCTOR:
-    //--------------------------------------------------------------------------
+    //------------------------------------------------------------------------------
 
-public:
+    //==============================================================================
+    /*!
+        \file       CToolCursor.h
 
-    //! Constructor of cToolCursor.
-    cToolCursor(cWorld* a_parentWorld);
+        \brief
+        Implements a tool cursor using a single haptic point.
+    */
+    //==============================================================================
 
-    //! Destructor of cToolCursor.
-    virtual ~cToolCursor();
+    //==============================================================================
+    /*!
+        \class      cToolCursor
+        \ingroup    tools
 
+        \brief
+        This class implements a cursor using a single haptic point.
 
-    //--------------------------------------------------------------------------
-    // PUBLIC MEMBERS
-    //--------------------------------------------------------------------------
+        \details
+        cToolCursor implements a single point contact haptic tool that can
+        apply forces in  three degrees of freedom and maintains three or
+        six degrees of device pose. \n
+    */
+    //==============================================================================
+    class cToolCursor : public cGenericTool
+    {
+        //--------------------------------------------------------------------------
+        // CONSTRUCTOR & DESTRUCTOR:
+        //--------------------------------------------------------------------------
 
-public:
+    public:
+        //! Constructor of cToolCursor.
+        cToolCursor(cWorld *a_parentWorld);
 
-    // Single haptic point representing a cursor.
-    cHapticPoint* m_hapticPoint;
+        //! Destructor of cToolCursor.
+        virtual ~cToolCursor();
 
+        //--------------------------------------------------------------------------
+        // PUBLIC MEMBERS
+        //--------------------------------------------------------------------------
 
-    //--------------------------------------------------------------------------
-    // PUBLIC METHODS
-    //--------------------------------------------------------------------------
+    public:
+        // Single haptic point representing a cursor.
+        cHapticPoint *m_hapticPoint;
 
-public:
+        //--------------------------------------------------------------------------
+        // PUBLIC METHODS
+        //--------------------------------------------------------------------------
 
-    //! This method computes the interaction forces between the haptic point and the environment.
-    virtual void computeInteractionForces();
+    public:
+        //! This method computes the interaction forces between the haptic point and the environment.
+        virtual void computeInteractionForces();
 
-    //! This method renders the tools using OpenGL.
-    virtual void render(cRenderOptions& a_options);
+        //! This method renders the tools using OpenGL.
+        virtual void render(cRenderOptions &a_options);
 
-    //! This method updates the position and orientation of the tool image.
-    virtual void updateToolImagePosition();
-};
+        //! This method updates the position and orientation of the tool image.
+        virtual void updateToolImagePosition();
+    };
 
-//------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------
 } // namespace chai3d
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 #endif
 //------------------------------------------------------------------------------
-
