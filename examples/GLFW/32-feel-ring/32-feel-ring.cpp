@@ -7,11 +7,11 @@ using namespace chai3d;
 using namespace std;
 //------------------------------------------------------------------------------
 
-#include <fstream>  // <-- needed for std::ifstream, std::ofstream
-#include <sstream>  // <-- needed for std::istringstream
-#include <iostream> // <-- needed for std::cout, std::endl
-#include <vector>   // <-- needed for std::vector
-#include <string>   // <-- needed for std::string
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <vector>
+#include <string>
 
 //------------------------------------------------------------------------------
 // GENERAL SETTINGS
@@ -35,7 +35,6 @@ bool mirroredDisplay = false;
 enum cMode
 {
     IDLE,
-    GOING_TO_START,
     PLAYING,
     GAME_OVER
 };
@@ -43,8 +42,9 @@ enum cMode
 //------------------------------------------------------------------------------
 // CUSTOM VARIABLES
 //------------------------------------------------------------------------------
-int Z_ROTATION_DEG = 1;
-int CURRENT_AZIMUTH_ANGLE = 20;
+double Z_ROTATION_DEG = 0.1;
+double CURRENT_AZIMUTH_ANGLE = 20;
+const double ROTATION_SPEED_DEG_PER_SEC = 0.8;
 
 double currentTime = 0.0;
 double startTime = 0.0;
@@ -72,6 +72,9 @@ double maxStiffness = 0.0;
 cVector3d startPosition(0.00621073, 0.0246095, 0.0438006);
 cVector3d endPosition(0.0186877, -0.00899538, 0.046728);
 
+cVector3d startPos(-0.145663, 0.133531, 0.311223);
+cVector3d endPos(-0.0352491, -0.0603905, 0.346319);
+
 //------------------------------------------------------------------------------
 // DECLARED VARIABLES
 //------------------------------------------------------------------------------
@@ -88,6 +91,9 @@ cDirectionalLight *light;
 // a virtual object
 cMultiMesh *object;
 cMultiMesh *cartoonMesh;
+
+cShapeSphere *startingZone = nullptr;
+cShapeSphere *endingZone = nullptr;
 
 // a haptic device handler
 cHapticDeviceHandler *handler;
@@ -117,10 +123,9 @@ cAudioBuffer *audioBuffer2;
 cAudioSource *toolAudioSource;
 
 cLabel *timeLabel;
-
 cLabel *globalLabel;
-
 cLabel *centerLabel;
+cLabel *labelInstructions;
 
 // a flag that indicates if the haptic simulation is currently running
 bool simulationRunning = false;
@@ -202,7 +207,19 @@ void close(void);
 /*
     DEMO:   32-protein-ring.cpp
 
-    ......
+    This is the ring protein demo.
+    When the demo starts, the haptic device will move to the starting position.
+    The demo will start as soon as the tool is inside the green zone.
+    If the tool cursor is not trapped inside the mesh, you can try to enter the
+    mesh by going into contact (you will get trapped inside the mesh).
+    Once inside the mesh, the protein will start to spin around the Z axis slowly,
+    the objective is to move the ball along the protein chain to reach the end position.
+    The faster you complete the demo, the higher your score will be!
+    BUT BEWARE: if you touch the walls of the protein, you will lose "life"!
+    This gameplay is not visible by default for the sake of the demo in Dubai.
+    By default, the music and background change while pushing against the walls
+    are not displayed, you can toggle them ON using the keyboard inputs defined
+    below.
 
 */
 //==============================================================================
@@ -223,22 +240,11 @@ int main(int argc, char *argv[])
          << endl;
     cout << "Keyboard Options:" << endl
          << endl;
-    cout << "[1] - Toggle texture display" << endl;
-    cout << "[2] - Toggle wireframe mode" << endl;
-    cout << "[3] - Toggle collision tree display" << endl;
-    cout << "[4] - Decrease collision tree display depth" << endl;
-    cout << "[5] - Increase collision tree display depth" << endl;
-    cout << "[s] - Save screenshot to file" << endl;
-    cout << "[t] - Show/hide triangles" << endl;
-    cout << "[e] - Show/hide edges" << endl;
-    cout << "[n] - Show/hide normals" << endl;
+    cout << "[Space] - Start the demo" << endl;
     cout << "[f] - Toggle fullscreen mode" << endl;
     cout << "[m] - Toggle vertical mirroring" << endl;
     cout << "[i] - Toggle music playback" << endl;
-    cout << "[r] - Run demo (move to start position)" << endl;
     cout << "[b] - Toggle background color" << endl;
-    cout << "[z] - Toggle zoom" << endl;
-    cout << "[Left/Right] - Rotate object/camera" << endl;
     cout << "[q] or [ESC] - Exit application" << endl;
     cout << endl
          << endl;
@@ -424,6 +430,8 @@ int main(int argc, char *argv[])
     // the tool is located inside an object for instance.
     tool->setWaitForSmallForce(false);
 
+    tool->enableDynamicObjects(true);
+
     // start the haptic tool
     tool->start();
 
@@ -563,15 +571,6 @@ int main(int argc, char *argv[])
     // compute all edges of object for which adjacent triangles have more than 40 degree angle
     object->computeAllEdges(40);
 
-    // cMaterialPtr material_protein = cMaterial::create();
-    // cColorf blue(0.2f, 0.2f, 0.7f);
-    // material_protein->setColor(blue); // initial color blue
-    // object->setMaterial(material_protein);
-
-    // object->m_material->setRedDarkSalmon(); // initial color red
-
-    // object->m_material->setBlack(); // initial color black
-
     // set line width of edges and color
     cColorf colorEdges;
     colorEdges.setBlack();
@@ -586,6 +585,8 @@ int main(int argc, char *argv[])
     object->setShowTriangles(showTriangles);
     object->setShowEdges(showEdges);
     object->setShowNormals(showNormals);
+
+    object->setEnabled(false);
 
     cartoonMesh = new cMultiMesh();
 
@@ -647,6 +648,31 @@ int main(int argc, char *argv[])
     trajFile.close();
 
     //--------------------------------------------------------------------------
+    // STARTING AND ENDING ZONE SPHERES
+    //--------------------------------------------------------------------------
+
+    startingZone = new cShapeSphere(0.015);
+    world->addChild(startingZone);
+
+    startingZone->setLocalPos(startPos);
+
+    startingZone->m_material->setGreenChartreuse();
+    startingZone->setTransparencyLevel(0.3);
+
+    startingZone->setHapticEnabled(false);
+
+    endingZone = new cShapeSphere(0.015);
+    world->addChild(endingZone);
+
+    endingZone->setLocalPos(endPos);
+
+    endingZone->m_material->setRedCrimson();
+    endingZone->setTransparencyLevel(0.3);
+
+    endingZone->setHapticEnabled(false);
+    endingZone->setEnabled(false);
+
+    //--------------------------------------------------------------------------
     // WIDGETS
     //--------------------------------------------------------------------------
 
@@ -660,19 +686,25 @@ int main(int argc, char *argv[])
 
     timeLabel = new cLabel(fontTime);
     timeLabel->m_fontColor.setBlack();
-    camera->m_frontLayer->addChild(timeLabel);
+    // camera->m_frontLayer->addChild(timeLabel);
     timeLabel->setLocalPos(10, (int)(0.5 * (height - timeLabel->getHeight())));
     double penaltyPercentage = cClamp(wallPenalty / maxPenalty, 0.0, 1.0);
 
     centerLabel = new cLabel(fontCenter);
     centerLabel->m_fontColor.setBlack();
-    camera->m_frontLayer->addChild(centerLabel);
+    // camera->m_frontLayer->addChild(centerLabel);
     centerLabel->setText("Press 'Space' bar");
     centerLabel->setLocalPos((int)(0.5 * (width - centerLabel->getWidth())), (int)(0.7 * height - 0.5 * centerLabel->getHeight()));
 
     globalLabel = new cLabel(font);
     globalLabel->m_fontColor.setBlack();
     camera->m_frontLayer->addChild(globalLabel);
+    globalLabel->setEnabled(false);
+
+    labelInstructions = new cLabel(fontTime);
+    labelInstructions->m_fontColor.setGreenDark();
+    camera->m_frontLayer->addChild(labelInstructions);
+    labelInstructions->setText("Move to the Green Sphere to Start!");
 
     // create a background
     background = new cBackground();
@@ -896,19 +928,6 @@ void keyCallback(GLFWwindow *a_window, int a_key, int a_scancode, int a_action, 
         }
     }
 
-    // option - run the demo
-    else if (a_key == GLFW_KEY_SPACE)
-    {
-        state = GOING_TO_START;
-        runStarted = false;
-        startTime = glfwGetTime();
-        world->removeChild(cartoonMesh);
-        double penaltyPercentage = cClamp(wallPenalty / maxPenalty, 0.0, 1.0);
-        updateUILabels();
-        // reset mapping between device and tool workspace
-        tool->initialize();
-    }
-
     // option - toggle background
     else if (a_key == GLFW_KEY_B)
     {
@@ -938,46 +957,29 @@ void keyCallback(GLFWwindow *a_window, int a_key, int a_scancode, int a_action, 
         }
     }
 
-    // option - rotate object positively around global Z axis
-    else if (a_key == GLFW_KEY_RIGHT)
-    {
+    // // option - rotate object positively around global Z axis
+    // else if (a_key == GLFW_KEY_RIGHT)
+    // {
+    //     CURRENT_AZIMUTH_ANGLE -= Z_ROTATION_DEG;
 
-        // Rotate the object itself
-        // cTransform T = object->getLocalTransform();
-        // cMatrix3d R_inc;
-        // R_inc.identity();
-        // R_inc.rotateAboutGlobalAxisDeg(cVector3d(0, 0, 1), -Z_ROTATION_DEG);
-        // cTransform T_new = R_inc * T;
-        // object->setLocalTransform(T_new);
+    //     camera->setSphericalDeg(1.0,
+    //                             65,
+    //                             CURRENT_AZIMUTH_ANGLE);
 
-        CURRENT_AZIMUTH_ANGLE -= Z_ROTATION_DEG;
+    //     tool->setLocalRot(camera->getLocalRot());
+    // }
 
-        camera->setSphericalDeg(1.0,
-                                65,
-                                CURRENT_AZIMUTH_ANGLE);
+    // // option - rotate object negatively around global Z axis
+    // else if (a_key == GLFW_KEY_LEFT)
+    // {
+    //     CURRENT_AZIMUTH_ANGLE += Z_ROTATION_DEG;
 
-        tool->setLocalRot(camera->getLocalRot());
-    }
+    //     camera->setSphericalDeg(1.0,
+    //                             65,
+    //                             CURRENT_AZIMUTH_ANGLE);
 
-    // option - rotate object negatively around global Z axis
-    else if (a_key == GLFW_KEY_LEFT)
-    {
-        // Rotate the object itself
-        // cTransform T = object->getLocalTransform();
-        // cMatrix3d R_inc;
-        // R_inc.identity();
-        // R_inc.rotateAboutGlobalAxisDeg(cVector3d(0, 0, 1), Z_ROTATION_DEG);
-        // cTransform T_new = R_inc * T;
-        // object->setLocalTransform(T_new);
-
-        CURRENT_AZIMUTH_ANGLE += Z_ROTATION_DEG;
-
-        camera->setSphericalDeg(1.0,
-                                65,
-                                CURRENT_AZIMUTH_ANGLE);
-
-        tool->setLocalRot(camera->getLocalRot());
-    }
+    //     tool->setLocalRot(camera->getLocalRot());
+    // }
 }
 
 //------------------------------------------------------------------------------
@@ -1129,18 +1131,23 @@ void updateGraphics(void)
 
 void updateHaptics(void)
 {
-    cGenericObject *selectedObject = NULL;
-    cTransform tool_T_object;
-
     // simulation in now running
     simulationRunning = true;
     simulationFinished = false;
 
-    cVector3d lockedPosition;
+    int counter = 0;
+
+    cPrecisionClock rotClock;
+    double lastUpdateTime = 0.0;
+    static bool rotClockRunning = false;
+    rotClock.start();
 
     // main haptic simulation loop
     while (simulationRunning)
     {
+
+        cTransform tool_T_device = tool->getDeviceGlobalTransform();
+
         /////////////////////////////////////////////////////////////////////
         // READ HAPTIC DEVICE
         /////////////////////////////////////////////////////////////////////
@@ -1148,11 +1155,6 @@ void updateHaptics(void)
         // read current position and velocity
         cVector3d position;
         hapticDevice->getPosition(position);
-        // cout << "Device position norm: " << position.length() << endl;
-
-        // static int printCounter = 0;
-        // if (printCounter++ % 100 == 0)
-        //     cout << "Device position: " << position << endl;
 
         cVector3d linearVelocity;
         hapticDevice->getLinearVelocity(linearVelocity);
@@ -1170,61 +1172,26 @@ void updateHaptics(void)
         // update tool pose
         tool->updateFromDevice();
 
-        object->setEnabled(objectEnabled); // disables all interactions
-
         tool->computeInteractionForces();
+
+        float errorStartPosition = (tool->getDeviceGlobalPos() - startPos).length();
+        float errorEndPosition = (tool->getDeviceGlobalPos() - endPos).length();
 
         ///////////////////////////////////////////////////////////////////////
         // GOAL POSITION TRACKING WITH VELOCITY SATURATION
         ///////////////////////////////////////////////////////////////////////
 
-        if (state == GOING_TO_START)
+        if (state == IDLE)
         {
 
             double kv = 20.0;
-            double kp = 300.0;
-            double ki = 50.0;
-
-            // cout << "Position: " << position << endl;
+            double kp = 200.0;
 
             cVector3d pos_error = startPosition - position;
-            double position_error = pos_error.length();
+            pos_error = -(tool->getDeviceGlobalPos() - startPos);
+            cVector3d vel_desired = (kp * pos_error) / kv;
 
-            // static int printCounter = 0;
-            // if (printCounter++ % 100 == 0)
-            //     cout << "Position error: " << position_error << endl;
-
-            static cVector3d intError(0.0, 0.0, 0.0);
-            static cPrecisionClock integratorClock;
-            static bool clockStarted = false;
-            if (!clockStarted)
-            {
-                integratorClock.start();
-                clockStarted = true;
-            }
-
-            double dt = integratorClock.stop();
-            integratorClock.start();
-
-            // The integrator is only active when close to the goal
-            if (position_error < 0.005)
-            {
-                intError += pos_error * dt;
-
-                // Prevent wind-up
-                double intLimit = 0.01;
-                if (intError.length() > intLimit)
-                    intError *= intLimit / intError.length();
-            }
-            else
-            {
-                // reset integrator when far from target
-                intError.zero();
-            }
-
-            cVector3d vel_desired = (kp * pos_error + ki * intError) / kv;
-
-            double Vmax = 0.15;
+            double Vmax = 0.05;
             double vel_mag = vel_desired.length();
             if (vel_mag > Vmax)
                 vel_desired *= Vmax / vel_mag;
@@ -1237,42 +1204,31 @@ void updateHaptics(void)
             tool->setDeviceGlobalForce(totalForce);
             tool->applyToDevice();
 
-            // --------------------------------------------------
-            // Transition condition
-            // --------------------------------------------------
-            if ((position_error < 0.0008) && (linearVelocity.length() < 0.01))
+            if (errorStartPosition < 0.003)
             {
                 state = PLAYING;
-                centerLabel->setText("");
-                lockedPosition = tool->getDeviceGlobalPos();
-                objectEnabled = true; // enable collisions
-                intError.zero();      // reset integrator on transition
+                endingZone->setEnabled(true);
+                startingZone->setEnabled(false);
+                object->setEnabled(true);
+                labelInstructions->setEnabled(false);
+                globalLabel->setEnabled(true);
             }
         }
-
         else if (state == PLAYING)
         {
 
-            cVector3d end_pos_error = endPosition - position;
-            double end_position_error = end_pos_error.length();
+            if (!rotClockRunning)
+            {
+                rotClock.reset();
+                rotClock.start();
+                lastUpdateTime = rotClock.getCurrentTimeSeconds();
+                rotClockRunning = true;
+            }
 
-            cVector3d start_pos_error = startPosition - position;
-            double start_position_error = start_pos_error.length();
-
-            double arrivalThreshold = 0.002;
-            double departureThreshold = 0.002;
-
-            if (end_position_error < arrivalThreshold)
+            if (errorEndPosition < 0.003)
             {
                 cout << "Reached goal!" << endl;
                 state = GAME_OVER;
-                runStarted = false;
-            }
-
-            if (start_position_error < departureThreshold && !runStarted)
-            {
-                cout << "Game starting!" << endl;
-                runStarted = true;
             }
 
             // accumulate wall contact penalty
@@ -1280,6 +1236,20 @@ void updateHaptics(void)
             if (currentForceMag > 1.0)
             {
                 wallPenalty += currentForceMag * dt;
+            }
+
+            // UPDATE THE CAMERA ROTATION
+            double currentTime = rotClock.getCurrentTimeSeconds();
+            double deltaTime = currentTime - lastUpdateTime;
+
+            if (deltaTime > 0.01) // update every 10 ms
+            {
+                CURRENT_AZIMUTH_ANGLE += ROTATION_SPEED_DEG_PER_SEC * deltaTime;
+
+                camera->setSphericalDeg(1.0, 65, CURRENT_AZIMUTH_ANGLE);
+                tool->setLocalRot(camera->getLocalRot());
+
+                lastUpdateTime = currentTime;
             }
         }
 
@@ -1290,18 +1260,13 @@ void updateHaptics(void)
             tool->applyToDevice();
         }
 
-        /////////////////////////////////////////////////////////////////////////
-        // MANIPULATION
-        /////////////////////////////////////////////////////////////////////////
-
-        // compute transformation from world to tool (haptic device)
-        cTransform world_T_tool = tool->getDeviceGlobalTransform();
-
         // update the magnitude of the current force
         currentForceMag = tool->getDeviceLocalForce().length();
 
         // send forces to haptic device
         tool->applyToDevice();
+
+        counter++;
     }
 
     // exit haptics thread
@@ -1312,7 +1277,6 @@ void updateHaptics(void)
 
 void updateUILabels()
 {
-    // --- Update globalLabel (top status bar) ---
     globalLabel->setText(
         "Music: " + std::string(musicOn ? "ON" : "OFF") +
         " (I)    Background: " + std::string(backgroundOn ? "ON" : "OFF") +
@@ -1322,6 +1286,8 @@ void updateUILabels()
 
     // Recenter the label horizontally
     globalLabel->setLocalPos((int)(0.5 * (width - globalLabel->getWidth())), 15);
+
+    labelInstructions->setLocalPos((int)(0.5 * (width - labelInstructions->getWidth())), 15);
 
     // --- Update timeLabel (timer + penalty) ---
     double penaltyPercentage = cClamp(100.0 - (wallPenalty / maxPenalty * 100.0), 0.0, 100.0);

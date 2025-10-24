@@ -33,7 +33,7 @@
     CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-    POSSIBILITY OF SUCH DAMAGE. 
+    POSSIBILITY OF SUCH DAMAGE.
 
     \author    <http://www.chai3d.org>
     \author    Francois Conti
@@ -56,7 +56,7 @@ using namespace std;
 
 // stereo Mode
 /*
-    C_STEREO_DISABLED:            Stereo is disabled 
+    C_STEREO_DISABLED:            Stereo is disabled
     C_STEREO_ACTIVE:              Active stereo for OpenGL NVDIA QUADRO cards
     C_STEREO_PASSIVE_LEFT_RIGHT:  Passive stereo where L/R images are rendered next to each other
     C_STEREO_PASSIVE_TOP_BOTTOM:  Passive stereo where L/R images are rendered above each other
@@ -69,44 +69,43 @@ bool fullscreen = false;
 // mirrored display
 bool mirroredDisplay = false;
 
-
 //------------------------------------------------------------------------------
 // DECLARED VARIABLES
 //------------------------------------------------------------------------------
 
 // a world that contains all objects of the virtual environment
-cWorld* world;
+cWorld *world;
 
 // a camera to render the world in the window display
-cCamera* camera;
+cCamera *camera;
 
 // a light source to illuminate the objects in the world
 cSpotLight *light;
 
 // a haptic device handler
-cHapticDeviceHandler* handler;
+cHapticDeviceHandler *handler;
 
 // a pointer to the current haptic device
 cGenericHapticDevicePtr hapticDevice;
 
 // a virtual tool representing the haptic device in the scene
-cToolCursor* tool;
+cToolCursor *tool;
 
 // a few objects that are placed in the scene
-cMesh* base;
-cMesh* teaPot;
-cMesh* cylinder;
-cMesh* cone;
-cMultiSegment* segments;
+cMesh *base;
+cMesh *teaPot;
+cMesh *cylinder;
+cMesh *cone;
+cMultiSegment *segments;
 
 // a colored background
-cBackground* background;
+cBackground *background;
 
 // a font for rendering text
 cFontPtr font;
 
 // a label to display the rate [Hz] at which the simulation is running
-cLabel* labelRates;
+cLabel *labelRates;
 
 // a flag that indicates if the haptic simulation is currently running
 bool simulationRunning = false;
@@ -121,10 +120,10 @@ cFrequencyCounter freqCounterGraphics;
 cFrequencyCounter freqCounterHaptics;
 
 // haptic thread
-cThread* hapticsThread;
+cThread *hapticsThread;
 
 // a handle to window display context
-GLFWwindow* window = NULL;
+GLFWwindow *window = NULL;
 
 // current width of window
 int width = 0;
@@ -138,19 +137,18 @@ int swapInterval = 1;
 // root resource path
 string resourceRoot;
 
-
 //------------------------------------------------------------------------------
 // DECLARED FUNCTIONS
 //------------------------------------------------------------------------------
 
 // callback when the window display is resized
-void windowSizeCallback(GLFWwindow* a_window, int a_width, int a_height);
+void windowSizeCallback(GLFWwindow *a_window, int a_width, int a_height);
 
 // callback when an error GLFW occurs
-void errorCallback(int error, const char* a_description);
+void errorCallback(int error, const char *a_description);
 
 // callback when a key is pressed
-void keyCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, int a_mods);
+void keyCallback(GLFWwindow *a_window, int a_key, int a_scancode, int a_action, int a_mods);
 
 // this function renders the scene
 void updateGraphics(void);
@@ -161,17 +159,16 @@ void updateHaptics(void);
 // this function closes the application
 void close(void);
 
-
 //==============================================================================
 /*
     DEMO:   13-primitives.cpp
 
-    This example illustrates how to build simple triangle based mesh primitives 
+    This example illustrates how to build simple triangle based mesh primitives
     using the functions provided in file graphics/CPrimitives.h
 */
 //==============================================================================
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     //--------------------------------------------------------------------------
     // INITIALIZATION
@@ -182,14 +179,17 @@ int main(int argc, char* argv[])
     cout << "CHAI3D" << endl;
     cout << "Demo: 13-primitives" << endl;
     cout << "Copyright 2003-2016" << endl;
-    cout << "-----------------------------------" << endl << endl << endl;
-    cout << "Keyboard Options:" << endl << endl;
+    cout << "-----------------------------------" << endl
+         << endl
+         << endl;
+    cout << "Keyboard Options:" << endl
+         << endl;
     cout << "[s] - Save copy of shadowmap to file" << endl;
     cout << "[f] - Enable/Disable full screen mode" << endl;
     cout << "[m] - Enable/Disable vertical mirroring" << endl;
     cout << "[q] - Exit application" << endl;
-    cout << endl << endl;
-
+    cout << endl
+         << endl;
 
     //--------------------------------------------------------------------------
     // OPEN GL - WINDOW DISPLAY
@@ -207,7 +207,7 @@ int main(int argc, char* argv[])
     glfwSetErrorCallback(errorCallback);
 
     // compute desired size of window
-    const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
     int w = 0.8 * mode->height;
     int h = 0.5 * mode->height;
     int x = 0.5 * (mode->width - w);
@@ -265,7 +265,6 @@ int main(int argc, char* argv[])
     }
 #endif
 
-
     //--------------------------------------------------------------------------
     // WORLD - CAMERA - LIGHTING
     //--------------------------------------------------------------------------
@@ -281,9 +280,9 @@ int main(int argc, char* argv[])
     world->addChild(camera);
 
     // position and orient the camera
-    camera->set(cVector3d(0.9, 0.0, 0.6),    // camera position (eye)
-                cVector3d(0.0, 0.0, 0.0),    // lookat position (target)
-                cVector3d(0.0, 0.0, 1.0));   // direction of the (up) vector
+    camera->set(cVector3d(0.9, 0.0, 0.6),  // camera position (eye)
+                cVector3d(0.0, 0.0, 0.0),  // lookat position (target)
+                cVector3d(0.0, 0.0, 1.0)); // direction of the (up) vector
 
     // set the near and far clipping planes of the camera
     // anything in front or behind these clipping planes will not be rendered
@@ -312,18 +311,17 @@ int main(int argc, char* argv[])
     light->setLocalPos(0.6, 0.6, 0.5);
 
     // define the direction of the light beam
-    light->setDir(-0.5,-0.5,-0.5);
+    light->setDir(-0.5, -0.5, -0.5);
 
     // enable this light source to generate shadows
     light->setShadowMapEnabled(true);
 
     // set the resolution of the shadow map
-    //light->m_shadowMap->setQualityLow();
+    // light->m_shadowMap->setQualityLow();
     light->m_shadowMap->setQualityMedium();
 
     // set light cone half angle
     light->setCutOffAngleDeg(30);
-
 
     //--------------------------------------------------------------------------
     // HAPTIC DEVICES / TOOLS
@@ -366,13 +364,12 @@ int main(int argc, char* argv[])
     tool->enableDynamicObjects(true);
 
     // haptic forces are enabled only if small forces are first sent to the device;
-    // this mode avoids the force spike that occurs when the application starts when 
-    // the tool is located inside an object for instance. 
+    // this mode avoids the force spike that occurs when the application starts when
+    // the tool is located inside an object for instance.
     tool->setWaitForSmallForce(true);
 
     // start the haptic tool
     tool->start();
-
 
     //--------------------------------------------------------------------------
     // CREATE OBJECTS
@@ -383,15 +380,14 @@ int main(int argc, char* argv[])
     double workspaceScaleFactor = tool->getWorkspaceScaleFactor();
 
     // stiffness properties
-    double maxStiffness	= hapticDeviceInfo.m_maxLinearStiffness / workspaceScaleFactor;
-
+    double maxStiffness = hapticDeviceInfo.m_maxLinearStiffness / workspaceScaleFactor;
 
     /////////////////////////////////////////////////////////////////////////
     // BASE
     /////////////////////////////////////////////////////////////////////////
 
     // create a mesh
-    cMesh* base = new cMesh();
+    cMesh *base = new cMesh();
 
     // add object to world
     world->addChild(base);
@@ -405,9 +401,8 @@ int main(int argc, char* argv[])
                     10,
                     true,
                     true,
-                    cVector3d(0.0, 0.0,-0.01),
-                    cMatrix3d(cDegToRad(0), cDegToRad(0), cDegToRad(0), C_EULER_ORDER_XYZ)
-                    );
+                    cVector3d(0.0, 0.0, -0.01),
+                    cMatrix3d(cDegToRad(0), cDegToRad(0), cDegToRad(0), C_EULER_ORDER_XYZ));
 
     // set material properties
     base->m_material->setGrayGainsboro();
@@ -419,24 +414,22 @@ int main(int argc, char* argv[])
     // use display list to optimize graphic rendering performance
     base->setUseDisplayList(true);
 
-
     /////////////////////////////////////////////////////////////////////////
     // TEA POT
     /////////////////////////////////////////////////////////////////////////
 
     // create a mesh
-    cMesh* teaPot = new cMesh();
+    cMesh *teaPot = new cMesh();
 
     // add object to world
     base->addChild(teaPot);
 
     // build mesh using a cylinder primitive
     cCreateTeaPot(teaPot,
-                    0.5,
-                    4,
-                    cVector3d(0.0, 0.0, 0.0),
-                    cMatrix3d(cDegToRad(0), cDegToRad(0), cDegToRad(-90), C_EULER_ORDER_XYZ)
-                    );
+                  0.5,
+                  4,
+                  cVector3d(0.0, 0.0, 0.0),
+                  cMatrix3d(cDegToRad(0), cDegToRad(0), cDegToRad(-90), C_EULER_ORDER_XYZ));
 
     // position object
     teaPot->setLocalPos(0.1, 0.2, 0.0);
@@ -451,27 +444,25 @@ int main(int argc, char* argv[])
     // use display list to optimize graphic rendering performance
     teaPot->setUseDisplayList(true);
 
-
     /////////////////////////////////////////////////////////////////////////
     // CYLINDER
     /////////////////////////////////////////////////////////////////////////
 
     // create a mesh
-    cMesh*  cylinder = new cMesh();
+    cMesh *cylinder = new cMesh();
 
     // add object to world
     base->addChild(cylinder);
 
     // build mesh using a cylinder primitive
-    cCreatePipe(cylinder, 
+    cCreatePipe(cylinder,
                 0.15,
                 0.05,
                 0.06,
                 32,
                 1,
-                cVector3d(-0.05,-0.20, 0.0), 
-                cMatrix3d(cDegToRad(0), cDegToRad(0), cDegToRad(170), C_EULER_ORDER_XYZ)
-                );
+                cVector3d(-0.05, -0.20, 0.0),
+                cMatrix3d(cDegToRad(0), cDegToRad(0), cDegToRad(170), C_EULER_ORDER_XYZ));
 
     // set material properties
     cylinder->m_material->setBlueCornflower();
@@ -483,19 +474,18 @@ int main(int argc, char* argv[])
     // use display list to optimize graphic rendering performance
     cylinder->setUseDisplayList(true);
 
-
     /////////////////////////////////////////////////////////////////////////
     // CONE
     /////////////////////////////////////////////////////////////////////////
 
     // create a mesh
-    cMesh* cone = new cMesh();
+    cMesh *cone = new cMesh();
 
     // add object to world
     base->addChild(cone);
 
     // build mesh using a cylinder primitive
-    cCreateCone(cone, 
+    cCreateCone(cone,
                 0.15,
                 0.05,
                 0.01,
@@ -504,9 +494,8 @@ int main(int argc, char* argv[])
                 1,
                 true,
                 true,
-                cVector3d(0.30, 0.0, 0.0), 
-                cMatrix3d(cDegToRad(0), cDegToRad(0), cDegToRad(0), C_EULER_ORDER_XYZ)
-                );
+                cVector3d(0.30, 0.0, 0.0),
+                cMatrix3d(cDegToRad(0), cDegToRad(0), cDegToRad(0), C_EULER_ORDER_XYZ));
 
     // set material properties
     cone->m_material->setGreenForest();
@@ -518,13 +507,12 @@ int main(int argc, char* argv[])
     // use display list to optimize graphic rendering performance
     cone->setUseDisplayList(true);
 
-
     /////////////////////////////////////////////////////////////////////////
     // SEGMENTS
     /////////////////////////////////////////////////////////////////////////
 
     // create a line segment object
-    cMultiSegment* segments = new cMultiSegment();
+    cMultiSegment *segments = new cMultiSegment();
 
     // add object to world
     base->addChild(segments);
@@ -535,15 +523,15 @@ int main(int argc, char* argv[])
     double a = 0.0;
     double da = 0.2;
     double r = 0.05;
-    for (int i=0; i<200; i++)
+    for (int i = 0; i < 200; i++)
     {
         double px0 = r * cos(a);
         double py0 = r * sin(a);
         double pz0 = l;
 
-        double px1 = r * cos(a+da);
-        double py1 = r * sin(a+da);
-        double pz1 = l+dl;
+        double px1 = r * cos(a + da);
+        double py1 = r * sin(a + da);
+        double pz1 = l + dl;
 
         // create vertex 0
         int index0 = segments->newVertex(px0, py0, pz0);
@@ -562,11 +550,12 @@ int main(int argc, char* argv[])
     segments->m_material->setStiffness(0.5 * maxStiffness);
 
     // position object
-    segments->setLocalPos(0.22,-0.22, 0.0);
+    segments->setLocalPos(0.22, -0.22, 0.0);
 
     // set segment properties
     cColorf color;
     color.setYellowGold();
+
     segments->setLineColor(color);
     segments->setLineWidth(4.0);
     segments->setUseDisplayList(true);
@@ -576,7 +565,6 @@ int main(int argc, char* argv[])
 
     // use display list to optimize graphic rendering performance
     segments->setUseDisplayList(true);
-
 
     //--------------------------------------------------------------------------
     // CREATE SHADERS
@@ -595,14 +583,13 @@ int main(int argc, char* argv[])
     cylinder->setShaderProgram(shaderProgram);
     cone->setShaderProgram(shaderProgram);
 
-
     //--------------------------------------------------------------------------
     // WIDGETS
     //--------------------------------------------------------------------------
 
     // create a font
     font = NEW_CFONTCALIBRI20();
-    
+
     // create a label to display the haptic and graphic rate of the simulation
     labelRates = new cLabel(font);
     labelRates->m_fontColor.setBlack();
@@ -618,7 +605,6 @@ int main(int argc, char* argv[])
                                 cColorf(0.8f, 0.8f, 0.8f),
                                 cColorf(0.8f, 0.8f, 0.8f));
 
-
     //--------------------------------------------------------------------------
     // START SIMULATION
     //--------------------------------------------------------------------------
@@ -629,7 +615,6 @@ int main(int argc, char* argv[])
 
     // setup callback when application exits
     atexit(close);
-
 
     //--------------------------------------------------------------------------
     // MAIN GRAPHIC LOOP
@@ -669,7 +654,7 @@ int main(int argc, char* argv[])
 
 //------------------------------------------------------------------------------
 
-void windowSizeCallback(GLFWwindow* a_window, int a_width, int a_height)
+void windowSizeCallback(GLFWwindow *a_window, int a_width, int a_height)
 {
     // update window size
     width = a_width;
@@ -678,14 +663,14 @@ void windowSizeCallback(GLFWwindow* a_window, int a_width, int a_height)
 
 //------------------------------------------------------------------------------
 
-void errorCallback(int a_error, const char* a_description)
+void errorCallback(int a_error, const char *a_description)
 {
     cout << "Error: " << a_description << endl;
 }
 
 //------------------------------------------------------------------------------
 
-void keyCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, int a_mods)
+void keyCallback(GLFWwindow *a_window, int a_key, int a_scancode, int a_action, int a_mods)
 {
     // filter calls that only include a key press
     if ((a_action != GLFW_PRESS) && (a_action != GLFW_REPEAT))
@@ -715,10 +700,10 @@ void keyCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, 
         fullscreen = !fullscreen;
 
         // get handle to monitor
-        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        GLFWmonitor *monitor = glfwGetPrimaryMonitor();
 
         // get information about monitor
-        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
         // set fullscreen or window mode
         if (fullscreen)
@@ -753,7 +738,10 @@ void close(void)
     simulationRunning = false;
 
     // wait for graphics and haptics loops to terminate
-    while (!simulationFinished) { cSleepMs(100); }
+    while (!simulationFinished)
+    {
+        cSleepMs(100);
+    }
 
     // close haptic device
     tool->stop();
@@ -779,7 +767,6 @@ void updateGraphics(void)
     // update position of label
     labelRates->setLocalPos((int)(0.5 * (width - labelRates->getWidth())), 15);
 
-
     /////////////////////////////////////////////////////////////////////
     // RENDER SCENE
     /////////////////////////////////////////////////////////////////////
@@ -795,7 +782,8 @@ void updateGraphics(void)
 
     // check for any OpenGL errors
     GLenum err = glGetError();
-    if (err != GL_NO_ERROR) cout << "Error: " << gluErrorString(err) << endl;
+    if (err != GL_NO_ERROR)
+        cout << "Error: " << gluErrorString(err) << endl;
 }
 
 //------------------------------------------------------------------------------
@@ -809,15 +797,15 @@ enum cMode
 void updateHaptics(void)
 {
     cMode state = IDLE;
-    cGenericObject* object = NULL;
+    cGenericObject *object = NULL;
     cTransform tool_T_object;
 
     // simulation in now running
-    simulationRunning  = true;
+    simulationRunning = true;
     simulationFinished = false;
 
     // main haptic simulation loop
-    while(simulationRunning)
+    while (simulationRunning)
     {
         /////////////////////////////////////////////////////////////////////////
         // HAPTIC RENDERING
@@ -835,7 +823,6 @@ void updateHaptics(void)
         // compute interaction forces
         tool->computeInteractionForces();
 
- 
         /////////////////////////////////////////////////////////////////////////
         // HAPTIC MANIPULATION
         /////////////////////////////////////////////////////////////////////////
@@ -856,7 +843,7 @@ void updateHaptics(void)
             if (tool->m_hapticPoint->getNumCollisionEvents() > 0)
             {
                 // get contact event
-                cCollisionEvent* collisionEvent = tool->m_hapticPoint->getCollisionEvent(0);
+                cCollisionEvent *collisionEvent = tool->m_hapticPoint->getCollisionEvent(0);
 
                 // get object from contact event
                 object = collisionEvent->m_object;
@@ -864,7 +851,7 @@ void updateHaptics(void)
                 // get transformation from object
                 cTransform world_T_object = object->getGlobalTransform();
 
-                // compute inverse transformation from contact point to object 
+                // compute inverse transformation from contact point to object
                 cTransform tool_T_world = world_T_tool;
                 tool_T_world.invert();
 
@@ -906,15 +893,14 @@ void updateHaptics(void)
             state = IDLE;
         }
 
-
         /////////////////////////////////////////////////////////////////////////
         // FINALIZE
         /////////////////////////////////////////////////////////////////////////
 
         // send forces to haptic device
-        tool->applyToDevice();  
+        tool->applyToDevice();
     }
-    
+
     // exit haptics thread
     simulationFinished = true;
 }

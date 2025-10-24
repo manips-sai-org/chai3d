@@ -33,7 +33,7 @@
     CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-    POSSIBILITY OF SUCH DAMAGE. 
+    POSSIBILITY OF SUCH DAMAGE.
 
     \author    <http://www.chai3d.org>
     \author    Francois Conti
@@ -57,7 +57,7 @@ using namespace std;
 
 // stereo Mode
 /*
-    C_STEREO_DISABLED:            Stereo is disabled 
+    C_STEREO_DISABLED:            Stereo is disabled
     C_STEREO_ACTIVE:              Active stereo for OpenGL NVDIA QUADRO cards
     C_STEREO_PASSIVE_LEFT_RIGHT:  Passive stereo where L/R images are rendered next to each other
     C_STEREO_PASSIVE_TOP_BOTTOM:  Passive stereo where L/R images are rendered above each other
@@ -70,22 +70,21 @@ bool fullscreen = false;
 // mirrored display
 bool mirroredDisplay = false;
 
-
 //---------------------------------------------------------------------------
 // DECLARED VARIABLES
 //---------------------------------------------------------------------------
 
 // a world that contains all objects of the virtual environment
-cWorld* world;
+cWorld *world;
 
 // a camera to render the world in the window display
-cCamera* camera;
+cCamera *camera;
 
 // a light source to illuminate the objects in the world
 cDirectionalLight *light;
 
 // a haptic device handler
-cHapticDeviceHandler* handler;
+cHapticDeviceHandler *handler;
 
 // a haptic device
 cGenericHapticDevicePtr hapticDevice;
@@ -100,7 +99,7 @@ double workspaceScaleFactor;
 double cursorWorkspaceRadius;
 
 // a label to display the rate [Hz] at which the simulation is running
-cLabel* labelRates;
+cLabel *labelRates;
 
 // flag to indicate if the haptic simulation currently running
 bool simulationRunning = false;
@@ -115,10 +114,10 @@ cFrequencyCounter freqCounterGraphics;
 cFrequencyCounter freqCounterHaptics;
 
 // haptic thread
-cThread* hapticsThread;
+cThread *hapticsThread;
 
 // a handle to window display context
-GLFWwindow* window = NULL;
+GLFWwindow *window = NULL;
 
 // current width of window
 int width = 0;
@@ -132,22 +131,21 @@ int swapInterval = 1;
 // root resource path
 string resourceRoot;
 
-
 //---------------------------------------------------------------------------
 // GEL
 //---------------------------------------------------------------------------
 
 // deformable world
-cGELWorld* defWorld;
+cGELWorld *defWorld;
 
 // object mesh
-cGELMesh* defObject;
+cGELMesh *defObject;
 
 // dynamic nodes
-cGELSkeletonNode* nodes[10][10];
+cGELSkeletonNode *nodes[10][10];
 
 // haptic device model
-cShapeSphere* device;
+cShapeSphere *device;
 double deviceRadius;
 
 // radius of the dynamic model sphere (GEM)
@@ -156,19 +154,18 @@ double radius;
 // stiffness properties between the haptic device tool and the model (GEM)
 double stiffness;
 
-
 //---------------------------------------------------------------------------
 // DECLARED FUNCTIONS
 //---------------------------------------------------------------------------
 
 // callback when the window display is resized
-void windowSizeCallback(GLFWwindow* a_window, int a_width, int a_height);
+void windowSizeCallback(GLFWwindow *a_window, int a_width, int a_height);
 
 // callback when an error GLFW occurs
-void errorCallback(int error, const char* a_description);
+void errorCallback(int error, const char *a_description);
 
 // callback when a key is pressed
-void keyCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, int a_mods);
+void keyCallback(GLFWwindow *a_window, int a_key, int a_scancode, int a_action, int a_mods);
 
 // this function renders the scene
 void updateGraphics(void);
@@ -180,20 +177,18 @@ void updateHaptics(void);
 void close(void);
 
 // compute forces between tool and environment
-cVector3d computeForce(const cVector3d& a_cursor,
+cVector3d computeForce(const cVector3d &a_cursor,
                        double a_cursorRadius,
-                       const cVector3d& a_spherePos,
+                       const cVector3d &a_spherePos,
                        double a_radius,
                        double a_stiffness);
-
 
 //---------------------------------------------------------------------------
 // DECLARED MACROS
 //---------------------------------------------------------------------------
 
 // convert to resource path
-#define RESOURCE_PATH(p)    (char*)((resourceRoot+string(p)).c_str())
-
+#define RESOURCE_PATH(p) (char *)((resourceRoot + string(p)).c_str())
 
 //===========================================================================
 /*
@@ -206,7 +201,7 @@ cVector3d computeForce(const cVector3d& a_cursor,
 */
 //===========================================================================
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     //-----------------------------------------------------------------------
     // INITIALIZATION
@@ -217,16 +212,19 @@ int main(int argc, char* argv[])
     cout << "CHAI3D" << endl;
     cout << "Demo: 50-GEL-membrane" << endl;
     cout << "Copyright 2003-2016" << endl;
-    cout << "-----------------------------------" << endl << endl << endl;
-    cout << "Keyboard Options:" << endl << endl;
+    cout << "-----------------------------------" << endl
+         << endl
+         << endl;
+    cout << "Keyboard Options:" << endl
+         << endl;
     cout << "[s] - Show/Hide GEL Skeleton" << endl;
     cout << "[m] - Enable/Disable vertical mirroring" << endl;
     cout << "[q] - Exit application" << endl;
-    cout << endl << endl;
+    cout << endl
+         << endl;
 
     // parse first arg to try and locate resources
-    resourceRoot = string(argv[0]).substr(0,string(argv[0]).find_last_of("/\\")+1);
-
+    resourceRoot = string(argv[0]).substr(0, string(argv[0]).find_last_of("/\\") + 1);
 
     //-----------------------------------------------------------------------
     // OPEN GL - WINDOW DISPLAY
@@ -244,7 +242,7 @@ int main(int argc, char* argv[])
     glfwSetErrorCallback(errorCallback);
 
     // compute desired size of window
-    const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
     int w = 0.8 * mode->height;
     int h = 0.5 * mode->height;
     int x = 0.5 * (mode->width - w);
@@ -302,7 +300,6 @@ int main(int argc, char* argv[])
     }
 #endif
 
-
     //-----------------------------------------------------------------------
     // 3D - SCENEGRAPH
     //-----------------------------------------------------------------------
@@ -315,9 +312,9 @@ int main(int argc, char* argv[])
     world->addChild(camera);
 
     // position and orient the camera
-    camera->set(cVector3d(1.5, 0.0, 1.0),    // camera position (eye)
-                cVector3d(0.0, 0.0, 0.0),    // lookat position (target)
-                cVector3d(0.0, 0.0, 1.0));   // direction of the (up) vector
+    camera->set(cVector3d(1.5, 0.0, 1.0),  // camera position (eye)
+                cVector3d(0.0, 0.0, 0.0),  // lookat position (target)
+                cVector3d(0.0, 0.0, 1.0)); // direction of the (up) vector
 
     // set the near and far clipping planes of the camera
     camera->setClippingPlanes(0.01, 10.0);
@@ -345,8 +342,7 @@ int main(int argc, char* argv[])
     light->setEnabled(true);
 
     // define direction of light beam
-    light->setDir(0.0, 0.0,-1.0); 
-
+    light->setDir(0.0, 0.0, -1.0);
 
     //-----------------------------------------------------------------------
     // HAPTIC DEVICES / TOOLS
@@ -382,9 +378,8 @@ int main(int argc, char* argv[])
     device->m_material->setWhite();
     device->m_material->setShininess(100);
 
-    // interaction stiffness between tool and deformable model 
+    // interaction stiffness between tool and deformable model
     stiffness = 100;
-
 
     //-----------------------------------------------------------------------
     // COMPOSE THE VIRTUAL SCENE
@@ -403,9 +398,9 @@ int main(int argc, char* argv[])
     fileload = defObject->loadFromFile(RESOURCE_PATH("../resources/models/box/box.obj"));
     if (!fileload)
     {
-        #if defined(_MSVC)
+#if defined(_MSVC)
         fileload = defObject->loadFromFile("../../../bin/resources/models/box/box.obj");
-        #endif
+#endif
     }
     if (!fileload)
     {
@@ -425,13 +420,13 @@ int main(int argc, char* argv[])
     fileload = texture->loadFromFile(RESOURCE_PATH("../resources/images/shadow.jpg"));
     if (!fileload)
     {
-        #if defined(_MSVC)
+#if defined(_MSVC)
         fileload = texture->loadFromFile("../../../bin/resources/images/shadow.jpg");
-        #endif
+#endif
     }
     if (!fileload)
     {
-         cout << "Error - Texture failed to load correctly." << endl;
+        cout << "Error - Texture failed to load correctly." << endl;
         close();
         return (-1);
     }
@@ -446,33 +441,40 @@ int main(int argc, char* argv[])
 
     // set object to be transparent
     defObject->setTransparencyLevel(0.65, true, true);
-    
+
     // build dynamic vertices
     defObject->buildVertices();
 
+    // stiffness properties
+    double maxStiffness = hapticDeviceInfo.m_maxLinearStiffness / 1.0;
+    double maxDamping = hapticDeviceInfo.m_maxLinearDamping / 1.0;
+
+    defObject->m_material->setViscosity(0.5 * maxDamping);
+    defObject->createEffectViscosity();
+
     // set default properties for skeleton nodes
-    cGELSkeletonNode::s_default_radius        = 0.05;  // [m]
-    cGELSkeletonNode::s_default_kDampingPos   = 2.5;
-    cGELSkeletonNode::s_default_kDampingRot   = 0.6;
-    cGELSkeletonNode::s_default_mass          = 0.002; // [kg]
-    cGELSkeletonNode::s_default_showFrame     = true;
+    cGELSkeletonNode::s_default_radius = 0.05; // [m]
+    cGELSkeletonNode::s_default_kDampingPos = 2.5;
+    cGELSkeletonNode::s_default_kDampingRot = 0.6;
+    cGELSkeletonNode::s_default_mass = 0.002; // [kg]
+    cGELSkeletonNode::s_default_showFrame = true;
     cGELSkeletonNode::s_default_color.setBlueCornflower();
-    cGELSkeletonNode::s_default_useGravity    = true;
-    cGELSkeletonNode::s_default_gravity.set(0.00, 0.00,-9.81);
+    cGELSkeletonNode::s_default_useGravity = true;
+    cGELSkeletonNode::s_default_gravity.set(0.00, 0.00, -9.81);
     radius = cGELSkeletonNode::s_default_radius;
 
     // use internal skeleton as deformable model
     defObject->m_useSkeletonModel = true;
 
     // create an array of nodes
-    for (int y=0; y<10; y++)
+    for (int y = 0; y < 10; y++)
     {
-        for (int x=0; x<10; x++)
+        for (int x = 0; x < 10; x++)
         {
-            cGELSkeletonNode* newNode = new cGELSkeletonNode();
+            cGELSkeletonNode *newNode = new cGELSkeletonNode();
             nodes[x][y] = newNode;
             defObject->m_nodes.push_front(newNode);
-            newNode->m_pos.set( (-0.45 + 0.1*(double)x), (-0.43 + 0.1*(double)y), 0.0);
+            newNode->m_pos.set((-0.45 + 0.1 * (double)x), (-0.43 + 0.1 * (double)y), 0.0);
         }
     }
 
@@ -483,20 +485,20 @@ int main(int argc, char* argv[])
     nodes[9][9]->m_fixed = true;
 
     // set default physical properties for links
-    cGELSkeletonLink::s_default_kSpringElongation = 25.0;  // [N/m]
-    cGELSkeletonLink::s_default_kSpringFlexion    = 0.5;   // [Nm/RAD]
-    cGELSkeletonLink::s_default_kSpringTorsion    = 0.1;   // [Nm/RAD]
+    cGELSkeletonLink::s_default_kSpringElongation = 25.0; // [N/m]
+    cGELSkeletonLink::s_default_kSpringFlexion = 0.5;     // [Nm/RAD]
+    cGELSkeletonLink::s_default_kSpringTorsion = 0.1;     // [Nm/RAD]
     cGELSkeletonLink::s_default_color.setBlueCornflower();
 
     // create links between nodes
-    for (int y=0; y<9; y++)
+    for (int y = 0; y < 9; y++)
     {
-        for (int x=0; x<9; x++)
+        for (int x = 0; x < 9; x++)
         {
-            cGELSkeletonLink* newLinkX0 = new cGELSkeletonLink(nodes[x+0][y+0], nodes[x+1][y+0]);
-            cGELSkeletonLink* newLinkX1 = new cGELSkeletonLink(nodes[x+0][y+1], nodes[x+1][y+1]);
-            cGELSkeletonLink* newLinkY0 = new cGELSkeletonLink(nodes[x+0][y+0], nodes[x+0][y+1]);
-            cGELSkeletonLink* newLinkY1 = new cGELSkeletonLink(nodes[x+1][y+0], nodes[x+1][y+1]);
+            cGELSkeletonLink *newLinkX0 = new cGELSkeletonLink(nodes[x + 0][y + 0], nodes[x + 1][y + 0]);
+            cGELSkeletonLink *newLinkX1 = new cGELSkeletonLink(nodes[x + 0][y + 1], nodes[x + 1][y + 1]);
+            cGELSkeletonLink *newLinkY0 = new cGELSkeletonLink(nodes[x + 0][y + 0], nodes[x + 0][y + 1]);
+            cGELSkeletonLink *newLinkY1 = new cGELSkeletonLink(nodes[x + 1][y + 0], nodes[x + 1][y + 1]);
             defObject->m_links.push_front(newLinkX0);
             defObject->m_links.push_front(newLinkX1);
             defObject->m_links.push_front(newLinkY0);
@@ -509,7 +511,6 @@ int main(int argc, char* argv[])
 
     // show/hide underlying dynamic skeleton model
     defObject->m_showSkeletonModel = false;
-
 
     //--------------------------------------------------------------------------
     // WIDGETS
@@ -524,7 +525,7 @@ int main(int argc, char* argv[])
     labelRates->m_fontColor.setBlack();
 
     // create a background
-    cBackground* background = new cBackground();
+    cBackground *background = new cBackground();
     camera->m_backLayer->addChild(background);
 
     // set background properties
@@ -532,7 +533,6 @@ int main(int argc, char* argv[])
                                 cColorf(0.95f, 0.95f, 0.95f),
                                 cColorf(0.85f, 0.85f, 0.85f),
                                 cColorf(0.80f, 0.80f, 0.80f));
-
 
     //-----------------------------------------------------------------------
     // START SIMULATION
@@ -544,7 +544,6 @@ int main(int argc, char* argv[])
 
     // setup callback when application exits
     atexit(close);
-
 
     //--------------------------------------------------------------------------
     // MAIN GRAPHIC LOOP
@@ -584,23 +583,23 @@ int main(int argc, char* argv[])
 
 //---------------------------------------------------------------------------
 
-void windowSizeCallback(GLFWwindow* a_window, int a_width, int a_height)
+void windowSizeCallback(GLFWwindow *a_window, int a_width, int a_height)
 {
     // update window size
-    width  = a_width;
+    width = a_width;
     height = a_height;
 }
 
 //------------------------------------------------------------------------------
 
-void errorCallback(int a_error, const char* a_description)
+void errorCallback(int a_error, const char *a_description)
 {
     cout << "Error: " << a_description << endl;
 }
 
 //---------------------------------------------------------------------------
 
-void keyCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, int a_mods)
+void keyCallback(GLFWwindow *a_window, int a_key, int a_scancode, int a_action, int a_mods)
 {
     // filter calls that only include a key press
     if ((a_action != GLFW_PRESS) && (a_action != GLFW_REPEAT))
@@ -627,10 +626,10 @@ void keyCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, 
         fullscreen = !fullscreen;
 
         // get handle to monitor
-        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        GLFWmonitor *monitor = glfwGetPrimaryMonitor();
 
         // get information about monitor
-        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
         // set fullscreen or window mode
         if (fullscreen)
@@ -665,7 +664,10 @@ void close(void)
     simulationRunning = false;
 
     // wait for graphics and haptics loops to terminate
-    while (!simulationFinished) { cSleepMs(100); }
+    while (!simulationFinished)
+    {
+        cSleepMs(100);
+    }
 
     // close haptic device
     hapticDevice->close();
@@ -686,11 +688,10 @@ void updateGraphics(void)
 
     // update haptic and graphic rate data
     labelRates->setText(cStr(freqCounterGraphics.getFrequency(), 0) + " Hz / " +
-        cStr(freqCounterHaptics.getFrequency(), 0) + " Hz");
+                        cStr(freqCounterHaptics.getFrequency(), 0) + " Hz");
 
     // update position of label
     labelRates->setLocalPos((int)(0.5 * (width - labelRates->getWidth())), 15);
-
 
     /////////////////////////////////////////////////////////////////////
     // UPDATE DEFORMABLE MODELS
@@ -698,7 +699,6 @@ void updateGraphics(void)
 
     // update skins deformable objects
     defWorld->updateSkins(true);
-
 
     /////////////////////////////////////////////////////////////////////
     // RENDER SCENE
@@ -716,7 +716,8 @@ void updateGraphics(void)
     // check for any OpenGL errors
     GLenum err;
     err = glGetError();
-    if (err != GL_NO_ERROR) cout << "Error: " << gluErrorString(err) << endl;
+    if (err != GL_NO_ERROR)
+        cout << "Error: " << gluErrorString(err) << endl;
 }
 
 //---------------------------------------------------------------------------
@@ -728,11 +729,11 @@ void updateHaptics(void)
     clock.reset();
 
     // simulation in now running
-    simulationRunning  = true;
+    simulationRunning = true;
     simulationFinished = false;
 
     // main haptic simulation loop
-    while(simulationRunning)
+    while (simulationRunning)
     {
         // stop clock
         double time = cMin(0.001, clock.stop());
@@ -751,15 +752,15 @@ void updateHaptics(void)
 
         // compute reaction forces
         cVector3d force(0.0, 0.0, 0.0);
-        for (int y=0; y<10; y++)
+        for (int y = 0; y < 10; y++)
         {
-            for (int x=0; x<10; x++)
+            for (int x = 0; x < 10; x++)
             {
-               cVector3d nodePos = nodes[x][y]->m_pos;
-               cVector3d f = computeForce(pos, deviceRadius, nodePos, radius, stiffness);
-               cVector3d tmpfrc = -1.0 * f;
-               nodes[x][y]->setExternalForce(tmpfrc);
-               force.add(f);
+                cVector3d nodePos = nodes[x][y]->m_pos;
+                cVector3d f = computeForce(pos, deviceRadius, nodePos, radius, stiffness);
+                cVector3d tmpfrc = -1.0 * f;
+                nodes[x][y]->setExternalForce(tmpfrc);
+                force.add(f);
             }
         }
 
@@ -782,9 +783,9 @@ void updateHaptics(void)
 
 //---------------------------------------------------------------------------
 
-cVector3d computeForce(const cVector3d& a_cursor,
+cVector3d computeForce(const cVector3d &a_cursor,
                        double a_cursorRadius,
-                       const cVector3d& a_spherePos,
+                       const cVector3d &a_spherePos,
                        double a_radius,
                        double a_stiffness)
 {
@@ -807,7 +808,7 @@ cVector3d computeForce(const cVector3d& a_cursor,
     // compute penetration distance between tool and surface of sphere
     double penetrationDistance = (a_cursorRadius + a_radius) - vSphereCursor.length();
     cVector3d forceDirection = cNormalize(vSphereCursor);
-    force = cMul( penetrationDistance * a_stiffness, forceDirection);
+    force = cMul(penetrationDistance * a_stiffness, forceDirection);
 
     // return result
     return (force);

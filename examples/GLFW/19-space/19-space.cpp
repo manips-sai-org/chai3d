@@ -799,7 +799,7 @@ void updateHaptics(void)
         }
 
         // update linear acceleration
-        const double MASS = 1.0;
+        const double MASS = 100.0;
         linAcc = (1.0 / MASS) * (force + forceTool);
 
         // update angular velocity

@@ -4,6 +4,7 @@
 #include "chai3d.h"
 //------------------------------------------------------------------------------
 #include <GLFW/glfw3.h>
+#include <atomic>
 //------------------------------------------------------------------------------
 using namespace chai3d;
 using namespace std;
@@ -44,6 +45,8 @@ cDirectionalLight *light;
 // a virtual object
 cMultiMesh *object;
 
+cShapeSphere *startingZone = nullptr;
+
 // a haptic device handler
 cHapticDeviceHandler *handler;
 
@@ -57,12 +60,12 @@ cToolCursor *tool;
 cBackground *background;
 
 // a font for rendering text
-cFontPtr font;
 cFontPtr fontSelection;
 
 // a label to display the rate [Hz] at which the simulation is running
-cLabel *labelRates;
+cLabel *labelInstructions;
 cLabel *labelSelection;
+cLabel *labelRestart;
 
 // a flag that indicates if the haptic simulation is currently running
 bool simulationRunning = false;
@@ -102,6 +105,21 @@ int swapInterval = 1;
 // root resource path
 string resourceRoot;
 
+enum cMode
+{
+    INIT,
+    IDLE,
+    SELECTION
+};
+
+cMode state = INIT;
+
+// global variable to store initial transform
+cTransform objectOriginalTransform;
+std::vector<cTransform> subMeshOriginalTransforms;
+
+cVector3d startPosition = cVector3d(0, -0.5, 0);
+
 //------------------------------------------------------------------------------
 // DECLARED MACROS
 //------------------------------------------------------------------------------
@@ -134,9 +152,26 @@ void updateHaptics(void);
 // this function closes the application
 void close(void);
 
+std::atomic_bool resetRequested(false);
+
 //==============================================================================
 /*
-    DEMO:   34-feel-monkey
+    DEMO:   34-feel-monkey.cpp
+
+    In this demo, you can interact with the monkey virus protein and select
+    different groups of atoms composing the protein structure. If you poke the
+    protein, it will bounce back in place. If you use the butter/gripper of the
+    haptic device, you can select and drag different groups of atoms. You will
+    not feel any force while you manipulate, however when you release the object,
+    you will be able to feel it again.
+    There is an INIT state where the collisions with the objects are disabled.
+    To start the demo, simply go touch the green sphere to make the collisions start.
+    When it starts, you will be able to interact with the protein.
+    If you need to restart the demoo, simply press the 'r' key. It will teleport the
+    different groups back to the initial position. If you were to be inside the
+    object when you restart, the collisions will be disabled again until you
+    go touch the green sphere again.
+
 */
 //==============================================================================
 
@@ -149,30 +184,22 @@ int main(int argc, char *argv[])
     cout << endl;
     cout << "-----------------------------------" << endl;
     cout << "CHAI3D" << endl;
-    cout << "Demo: 21-object" << endl;
-    cout << "Copyright 2003-2016" << endl;
+    cout << "Demo: 34-feel-monkey" << endl;
+    cout << "Enzo Andreacchio" << endl;
     cout << "-----------------------------------" << endl
          << endl
          << endl;
     cout << "Keyboard Options:" << endl
          << endl;
-    cout << "[1] - Texture   (ON/OFF)" << endl;
-    cout << "[2] - Wireframe (ON/OFF)" << endl;
-    cout << "[3] - Collision tree (ON/OFF)" << endl;
-    cout << "[4] - Increase collision tree display depth" << endl;
-    cout << "[5] - Decrease collision tree display depth" << endl;
-    cout << "[s] - Save screenshot to file" << endl;
-    cout << "[e] - Enable/Disable display of edges" << endl;
-    cout << "[t] - Enable/Disable display of triangles" << endl;
-    cout << "[n] - Enable/Disable display of normals" << endl;
-    cout << "[f] - Enable/Disable full screen mode" << endl;
-    cout << "[m] - Enable/Disable vertical mirroring" << endl;
+
     cout << "[q] - Exit application" << endl;
     cout << endl
          << endl;
 
     // parse first arg to try and locate resources
     resourceRoot = string(argv[0]).substr(0, string(argv[0]).find_last_of("/\\") + 1);
+
+    resetRequested.store(true);
 
     //--------------------------------------------------------------------------
     // OPEN GL - WINDOW DISPLAY
@@ -267,8 +294,8 @@ int main(int argc, char *argv[])
                                    cVector3d(0, 0, 1),  // zenith direction
                                    cVector3d(1, 0, 0)); // azimuth direction
 
-    camera->setSphericalDeg(1.0, // spherical coordinate radius
-                            65,  // spherical coordinate polar angle
+    camera->setSphericalDeg(1.3, // spherical coordinate radius
+                            100, // spherical coordinate polar angle
                             20); // spherical coordinate azimuth angle
 
     // set the near and far clipping planes of the camera
@@ -277,6 +304,8 @@ int main(int argc, char *argv[])
 
     // set stereo mode
     camera->setStereoMode(stereoMode);
+
+    // camera->setLocalPos(0.0, 0.0, 0.0);
 
     // set stereo eye separation and focal length (applies only if stereo is enabled)
     camera->setStereoEyeSeparation(0.03);
@@ -351,6 +380,9 @@ int main(int argc, char *argv[])
     // the tool is located inside an object for instance.
     tool->setWaitForSmallForce(true);
 
+    // IMPORTANT!!!! Without this line, the tool will penetrate inside the mesh!!
+    tool->enableDynamicObjects(true);
+
     // start the haptic tool
     tool->start();
 
@@ -412,23 +444,34 @@ int main(int argc, char *argv[])
     object->createAABBCollisionDetector(toolRadius);
 
     // define a default stiffness for the object
-    object->setStiffness(0.2 * maxStiffness, true);
+    object->setStiffness(0.9 * maxStiffness, true);
 
     // define some haptic friction properties
-    object->setFriction(0.1, 0.2, true);
+    object->setFriction(0.5, 0.2, true);
 
-    object->m_material->setViscosity(0.5 * maxDamping);
-    object->createEffectViscosity();
+    // object->m_material->setViscosity(0.5 * maxDamping);
+    // object->createEffectViscosity();
 
     // enable display list for faster graphic rendering
     object->setUseDisplayList(true);
 
-    // center object in scene
-    // object->setLocalPos(-1.0 * object->getBoundaryCenter());
-    object->setLocalPos(0, -0.1, -0.4);
-
     // rotate object in scene
     object->rotateExtrinsicEulerAnglesDeg(0, 0, 90, C_EULER_ORDER_XYZ);
+
+    // store initial transform so we can reset later
+    objectOriginalTransform = object->getLocalTransform();
+
+    // store original transforms of all sub-meshes
+    int numMeshes = object->getNumMeshes();
+    subMeshOriginalTransforms.resize(numMeshes);
+    for (int i = 0; i < numMeshes; ++i)
+    {
+        cMesh *sub = object->getMesh(i);
+        if (sub)
+        {
+            subMeshOriginalTransforms[i] = sub->getLocalTransform();
+        }
+    }
 
     // compute all edges of object for which adjacent triangles have more than 40 degree angle
     object->computeAllEdges(40);
@@ -448,7 +491,6 @@ int main(int argc, char *argv[])
     object->setShowEdges(showEdges);
     object->setShowNormals(showNormals);
 
-    int numMeshes = object->getNumMeshes();
     for (int i = 0; i < numMeshes; ++i)
     {
         cMesh *sub = object->getMesh(i);
@@ -459,16 +501,26 @@ int main(int argc, char *argv[])
     }
 
     //--------------------------------------------------------------------------
+    // STARTING ZONE SPHERE
+    //--------------------------------------------------------------------------
+
+    startingZone = new cShapeSphere(0.10);
+    world->addChild(startingZone);
+
+    startingZone->setLocalPos(startPosition);
+
+    startingZone->m_material->setGreenChartreuse();
+    startingZone->setTransparencyLevel(0.3);
+
+    startingZone->setHapticEnabled(false);
+
+    //--------------------------------------------------------------------------
     // WIDGETS
     //--------------------------------------------------------------------------
 
     // create a font
-    font = NEW_CFONTCALIBRI20();
 
     // create a label to display the haptic and graphic rate of the simulation
-    labelRates = new cLabel(font);
-    labelRates->m_fontColor.setBlack();
-    // camera->m_frontLayer->addChild(labelRates);
 
     fontSelection = cFont::create();
     fontSelection->loadFromFile(RESOURCE_PATH("../resources/fonts/calibri-48.fnt"));
@@ -477,6 +529,16 @@ int main(int argc, char *argv[])
     labelSelection->m_fontColor.setBlack();
     labelSelection->setText("");
     camera->m_frontLayer->addChild(labelSelection);
+
+    labelRestart = new cLabel(fontSelection);
+    labelRestart->m_fontColor.setBlack();
+    labelRestart->setText("Restart (R)");
+    camera->m_frontLayer->addChild(labelRestart);
+
+    labelInstructions = new cLabel(fontSelection);
+    labelInstructions->m_fontColor.setGreenDark();
+    camera->m_frontLayer->addChild(labelInstructions);
+    labelInstructions->setText("Move to the Green Sphere to Start!");
 
     // create a background
     background = new cBackground();
@@ -627,6 +689,14 @@ void keyCallback(GLFWwindow *a_window, int a_key, int a_scancode, int a_action, 
         object->setShowCollisionDetector(true, true);
     }
 
+    else if (a_key == GLFW_KEY_R)
+    {
+        // request reset to be performed by the haptics thread
+        resetRequested.store(true);
+        startingZone->setEnabled(true);
+        labelInstructions->setEnabled(true);
+    }
+
     // option - save screenshot to file
     else if (a_key == GLFW_KEY_S)
     {
@@ -724,13 +794,10 @@ void updateGraphics(void)
     // UPDATE WIDGETS
     /////////////////////////////////////////////////////////////////////
 
-    // update haptic and graphic rate data
-    labelRates->setText(cStr(freqCounterGraphics.getFrequency(), 0) + " Hz / " +
-                        cStr(freqCounterHaptics.getFrequency(), 0) + " Hz");
-
     // update position of label
-    labelRates->setLocalPos((int)(0.5 * (width - labelRates->getWidth())), 15);
+    labelInstructions->setLocalPos((int)(0.5 * (width - labelInstructions->getWidth())), 15);
     labelSelection->setLocalPos((int)(0.5 * (width - labelSelection->getWidth())), 15);
+    labelRestart->setLocalPos(10, 15);
 
     /////////////////////////////////////////////////////////////////////
     // RENDER SCENE
@@ -794,16 +861,16 @@ void updateGraphics(void)
 
 //------------------------------------------------------------------------------
 
-enum cMode
-{
-    INIT,
-    IDLE,
-    SELECTION
-};
-
 void updateHaptics(void)
 {
-    cMode state = INIT;
+    // angular velocity
+    cVector3d angVel(0, 0, 0.1);
+    cVector3d linVel(0, 0.1, 0);
+
+    // reset clock
+    cPrecisionClock clock;
+    clock.reset();
+
     cGenericObject *selectedObject = NULL;
     cTransform tool_T_object;
 
@@ -815,9 +882,32 @@ void updateHaptics(void)
     // tool->m_hapticPoint->m_enabled = false;
     object->setGhostEnabled(true);
 
+    cTransform initWorld_T_tool = tool->getDeviceGlobalTransform();
+    cVector3d prevToolGlobalPos = initWorld_T_tool.getLocalPos();
+
+    const double pushGain = 1.0;
+
     // main haptic simulation loop
     while (simulationRunning)
     {
+
+        /////////////////////////////////////////////////////////////////////
+        // SIMULATION TIME
+        /////////////////////////////////////////////////////////////////////
+
+        // stop the simulation clock
+        clock.stop();
+
+        // read the time increment in seconds
+        double timeInterval = clock.getCurrentTimeSeconds();
+
+        // restart the simulation clock
+        clock.reset();
+        clock.start();
+
+        // signal frequency counter
+        freqCounterHaptics.signal(1);
+
         /////////////////////////////////////////////////////////////////////////
         // HAPTIC RENDERING
         /////////////////////////////////////////////////////////////////////////
@@ -828,13 +918,39 @@ void updateHaptics(void)
         // compute global reference frames for each object
         world->computeGlobalPositions(true);
 
-        // update position and orientation of tool
+        // ----- handle a reset request from UI thread -----
+        if (resetRequested.load())
+        {
+            // make sure we are not in the middle of a selection
+            selectedObject = nullptr;
+            state = INIT;
+
+            tool->setDeviceGlobalForce(0.0, 0.0, 0.0);
+
+            // reset object transform safely inside haptics thread
+            object->setLocalTransform(objectOriginalTransform);
+
+            for (int i = 0; i < object->getNumMeshes(); ++i)
+            {
+                cMesh *sub = object->getMesh(i);
+                if (sub)
+                {
+                    sub->setLocalTransform(subMeshOriginalTransforms[i]);
+                }
+            }
+
+            world->computeGlobalPositions(true);
+            object->setGhostEnabled(true);
+
+            tool->initialize();
+
+            resetRequested.store(false);
+        }
+
         tool->updateFromDevice();
 
-        // compute interaction forces
         tool->computeInteractionForces();
 
-        // read current position and velocity
         cVector3d position;
         hapticDevice->getPosition(position);
 
@@ -850,22 +966,16 @@ void updateHaptics(void)
 
         if (state == INIT)
         {
+            float distanceFromStart = (tool->getDeviceGlobalPos() - startPosition).length();
             // go to idle as soon as the position of the haptic device is valid:
-            // a valid position is if x>=0, |y| > 0.04, z >= 0.04 or z <= -0.055
-            if ((position.x() >= 0.0) ||
-                (fabs(position.y()) > 0.04) ||
-                (position.z() >= 0.04) ||
-                (position.z() <= -0.055))
+            if (distanceFromStart < 0.1)
             {
                 state = IDLE;
                 object->setGhostEnabled(false);
+                startingZone->setEnabled(false);
+                labelInstructions->setEnabled(false);
             }
         }
-
-        //
-        // STATE 1:
-        // Idle mode - user presses the user switch
-        //
         else if ((state == IDLE) && (button == true))
         {
             // check if at least one contact has occurred
@@ -895,11 +1005,6 @@ void updateHaptics(void)
             // update state
             state = SELECTION;
         }
-
-        //
-        // STATE 2:
-        // Selection mode - operator maintains user switch enabled and moves object
-        //
         else if ((state == SELECTION) && (button == true))
         {
             // compute new transformation of object in global coordinates
@@ -918,14 +1023,55 @@ void updateHaptics(void)
 
             tool->initialize();
         }
-
-        //
-        // STATE 3:
-        // Finalize Selection mode - operator releases user switch.
-        //
         else
         {
             state = IDLE;
+        }
+
+        cVector3d objectPos2 = object->getGlobalPos();
+
+        /////////////////////////////////////////////////////////////////////
+        // DYNAMIC SIMULATION
+        /////////////////////////////////////////////////////////////////////
+        if (state == IDLE)
+        {
+            // ----------------------------
+            // SIMULATION PARAMETERS
+            // ----------------------------
+            double INERTIA = 50.0;    // rotational inertia
+            double MAX_ANG_VEL = 0.1; // maximum angular velocity
+            double MASS = 50.0;       // object mass
+            double kp = 150.0;        // linear spring stiffness
+            double kv = 120.0;        // linear damping
+
+            // ----------------------------
+            // POSITIONS
+            // ----------------------------
+            cVector3d toolPos = tool->getDeviceGlobalPos();
+            cVector3d objectPos = object->getGlobalPos();
+            cVector3d objectDesPos = cVector3d(0, 0, 0); // rest position
+
+            // ----------------------------
+            // LINEAR FORCES
+            // ----------------------------
+            cVector3d linAcc(0, 0, 0);
+            cVector3d forceTool = -tool->getDeviceGlobalForce();
+
+            // spring-damper toward desired position
+            cVector3d force = -kp * (objectPos - objectDesPos);
+            cVector3d dampingForce = -kv * linVel;
+
+            // linear acceleration
+            linAcc = (1.0 / MASS) * (force + forceTool + dampingForce);
+
+            // update linear velocity
+            linVel.add(timeInterval * linAcc);
+
+            // ----------------------------
+            // UPDATE POSITION
+            // ----------------------------
+            cVector3d nextPos = object->getLocalPos() + (timeInterval * linVel);
+            object->setLocalPos(nextPos);
         }
 
         /////////////////////////////////////////////////////////////////////////

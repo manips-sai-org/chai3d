@@ -81,6 +81,7 @@ endif()
 # build examples and extras
 option(BUILD_EXAMPLES "Build examples" ON)
 
+
 # output location
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${OS}-${ARCH})
 
@@ -145,6 +146,7 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES Darwin)
   )
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}   -Qunused-arguments -Wno-deprecated")
 endif()
+
 
 #
 # static library

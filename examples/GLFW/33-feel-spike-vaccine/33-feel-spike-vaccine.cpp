@@ -138,7 +138,14 @@ void close(void);
 
 //===========================================================================
 /*
-    DEMO:
+    DEMO: 33-feel-spike-vaccine.cpp
+
+    You are manipulating the blue antibody and can interact with the red spike.
+    The objective is to align and orient the antibody to match with the hole
+    in the spike protein. Once you succeed, you "neutralize" the spike!
+    Careful: if you push too hard against the spike, you can penetrate the mesh...
+    You don't need to apply any force to find the "Matched position".
+
  */
 //===========================================================================
 
@@ -152,25 +159,11 @@ int main(int argc, char *argv[])
     cout << "-----------------------------------" << endl;
     cout << "CHAI3D" << endl;
     cout << "Demo: 33-Feel-Spike-Vaccine" << endl;
-    cout << "Copyright 2003-2016" << endl;
+    cout << "Enzo Andreacchio" << endl;
     cout << "-----------------------------------" << endl
          << endl
          << endl;
     cout << "Keyboard Options:" << endl
-         << endl;
-    cout << "[h] - Display help menu" << endl;
-    cout << "[1] - Enable gravity" << endl;
-    cout << "[2] - Disable gravity" << endl
-         << endl;
-    cout << "[3] - decrease linear haptic gain" << endl;
-    cout << "[4] - increase linear haptic gain" << endl;
-    cout << "[5] - decrease angular haptic gain" << endl;
-    cout << "[6] - increase angular haptic gain" << endl
-         << endl;
-    cout << "[7] - decrease linear stiffness" << endl;
-    cout << "[8] - increase linear stiffness" << endl;
-    cout << "[9] - decrease angular stiffness" << endl;
-    cout << "[0] - increase angular stiffness" << endl
          << endl;
     cout << "[q] - Exit application\n"
          << endl;
@@ -263,7 +256,7 @@ int main(int argc, char *argv[])
 
     // set the background color of the environment
     // the color is defined by its (R,G,B) components.
-    world->setBackgroundColor(0.0, 0.0, 0.0);
+    world->setBackgroundColor(0.0, 0.8, 0.0);
 
     // create a camera and insert it into the virtual world
     camera = new cCamera(world);
@@ -335,6 +328,8 @@ int main(int argc, char *argv[])
 
     tool->setWaitForSmallForce(false);
 
+    tool->enableDynamicObjects(true);
+
     // initialize tool by connecting to haptic device
     tool->start();
 
@@ -347,9 +342,6 @@ int main(int argc, char *argv[])
     // hide the device sphere. only show proxy.
     tool->setShowContactPoints(false, false);
 
-    // haptic forces are enabled only if small forces are first sent to the device;
-    // this mode avoids the force spike that occurs when the application starts when
-    // the tool is located inside an object for instance.
     tool->setWaitForSmallForce(true);
 
     // start the haptic tool
@@ -371,7 +363,7 @@ int main(int argc, char *argv[])
     // camera->m_frontLayer->addChild(labelRates);
 
     globalLabel = new cLabel(fontCenter);
-    globalLabel->m_fontColor.setGreenDark();
+    globalLabel->m_fontColor.setBlack();
     globalLabel->setText("");
     camera->m_frontLayer->addChild(globalLabel);
 
@@ -404,8 +396,6 @@ int main(int argc, char *argv[])
     // CREATE ODE WORLD AND OBJECTS
     //-----------------------------------------------------------------------
 
-    // read the scale factor between the physical workspace of the haptic
-    // device and the virtual workspace defined for the tool
     double workspaceScaleFactor = tool->getWorkspaceScaleFactor();
 
     // stiffness properties
@@ -861,13 +851,15 @@ void updateHaptics(void)
         float errorPos = (posTool - posGoal).length();
         float errorAngle = fabs(angle2);
 
-        if ((posTool - posGoal).length() < 0.02 && fabs(angle2) < 0.3)
+        if ((posTool - posGoal).length() < 0.05 && fabs(angle2) < 0.6)
         {
+            camera->m_backLayer->removeChild(background);
             globalLabel->setText("Matched!");
             goalReached = true;
         }
         else
         {
+            camera->m_backLayer->addChild(background);
             globalLabel->setText("");
             goalReached = false;
         }
