@@ -114,13 +114,13 @@ cFontPtr fontTime;
 cFontPtr fontCenter;
 
 // audio device to play sound
-cAudioDevice *audioDevice;
+// cAudioDevice *audioDevice;
 
 // audio buffers to store sound files
-cAudioBuffer *audioBuffer1;
-cAudioBuffer *audioBuffer2;
+// cAudioBuffer *audioBuffer1;
+// cAudioBuffer *audioBuffer2;
 
-cAudioSource *toolAudioSource;
+// cAudioSource *toolAudioSource;
 
 cLabel *timeLabel;
 cLabel *globalLabel;
@@ -440,51 +440,51 @@ int main(int argc, char *argv[])
     //--------------------------------------------------------------------------
 
     // create an audio device to play sounds
-    audioDevice = new cAudioDevice();
+    // audioDevice = new cAudioDevice();
 
     // attach audio device to camera
-    camera->attachAudioDevice(audioDevice);
+    // camera->attachAudioDevice(audioDevice);
 
     // create an audio buffer and load audio wave file
-    audioBuffer1 = new cAudioBuffer();
-    bool fileload1 = audioBuffer1->loadFromFile(RESOURCE_PATH("../resources/sounds/classic.wav"));
-    if (!fileload1)
-    {
-#if defined(_MSVC)
-        fileload1 = audioBuffer1->loadFromFile("../../../bin/resources/sounds/metal-scraping.wav");
-#endif
-    }
+    //     audioBuffer1 = new cAudioBuffer();
+    //     bool fileload1 = audioBuffer1->loadFromFile(RESOURCE_PATH("../resources/sounds/classic.wav"));
+    //     if (!fileload1)
+    //     {
+    // #if defined(_MSVC)
+    //         fileload1 = audioBuffer1->loadFromFile("../../../bin/resources/sounds/metal-scraping.wav");
+    // #endif
+    //     }
 
     // create an audio buffer and load audio wave file
-    audioBuffer2 = new cAudioBuffer();
-    bool fileload2 = audioBuffer2->loadFromFile(RESOURCE_PATH("../resources/sounds/metal-impact.wav"));
-    if (!fileload2)
-    {
-#if defined(_MSVC)
-        fileload2 = audioBuffer2->loadFromFile("../../../bin/resources/sounds/metal-impact.wav");
-#endif
-    }
+    //     audioBuffer2 = new cAudioBuffer();
+    //     bool fileload2 = audioBuffer2->loadFromFile(RESOURCE_PATH("../resources/sounds/metal-impact.wav"));
+    //     if (!fileload2)
+    //     {
+    // #if defined(_MSVC)
+    //         fileload2 = audioBuffer2->loadFromFile("../../../bin/resources/sounds/metal-impact.wav");
+    // #endif
+    //     }
 
     // check for errors
-    if (!(fileload1 && fileload2))
-    {
-        cout << "Error - Sound file failed to load or initialize correctly." << endl;
-        close();
-        return (-1);
-    }
+    // if (!(fileload1 && fileload2))
+    // {
+    //     cout << "Error - Sound file failed to load or initialize correctly." << endl;
+    //     close();
+    //     return (-1);
+    // }
 
     //--------------------------------------------------------------------------
     // CREATE TOOL AUDIO SOURCE (FOR FORCE-DEPENDENT SOUND)
     //--------------------------------------------------------------------------
 
     // Create the audio source AFTER buffers and device are ready
-    toolAudioSource = new cAudioSource();
-    toolAudioSource->setAudioBuffer(audioBuffer1);
-    toolAudioSource->setLoop(true);
-    toolAudioSource->setGain(0.5);
+    // toolAudioSource = new cAudioSource();
+    // toolAudioSource->setAudioBuffer(audioBuffer1);
+    // toolAudioSource->setLoop(true);
+    // toolAudioSource->setGain(0.5);
 
     // (optional) also attach a source to the tool for collision sounds
-    tool->createAudioSource(audioDevice);
+    // tool->createAudioSource(audioDevice);
 
     //--------------------------------------------------------------------------
     // CREATE OBJECT
@@ -914,19 +914,19 @@ void keyCallback(GLFWwindow *a_window, int a_key, int a_scancode, int a_action, 
     }
 
     // option - toggle the music
-    else if (a_key == GLFW_KEY_I)
-    {
-        if (musicOn)
-        {
-            toolAudioSource->stop();
-            musicOn = false;
-        }
-        else
-        {
-            toolAudioSource->play();
-            musicOn = true;
-        }
-    }
+    // else if (a_key == GLFW_KEY_I)
+    // {
+    //     if (musicOn)
+    //     {
+    //         toolAudioSource->stop();
+    //         musicOn = false;
+    //     }
+    //     else
+    //     {
+    //         toolAudioSource->play();
+    //         musicOn = true;
+    //     }
+    // }
 
     // option - toggle background
     else if (a_key == GLFW_KEY_B)
@@ -1023,8 +1023,8 @@ void updateGraphics(void)
         static bool audioStarted = false;
         if (!audioStarted)
         {
-            if (musicOn)
-                toolAudioSource->play();
+            // if (musicOn)
+            //     toolAudioSource->play();
             audioStarted = true;
         }
         // Define thresholds
@@ -1055,7 +1055,7 @@ void updateGraphics(void)
         }
 
         // Update 3D sound position
-        toolAudioSource->setSourcePos(tool->getDeviceGlobalPos());
+        // toolAudioSource->setSourcePos(tool->getDeviceGlobalPos());
 
         // Smooth gain to avoid jitter
         static double lastGain = 0.0;
@@ -1064,8 +1064,8 @@ void updateGraphics(void)
         lastGain = smoothedGain;
 
         // Apply gain and pitch only if above threshold
-        toolAudioSource->setGain(smoothedGain);
-        toolAudioSource->setPitch(0.8 + 0.4 * smoothedGain);
+        // toolAudioSource->setGain(smoothedGain);
+        // toolAudioSource->setPitch(0.8 + 0.4 * smoothedGain);
 
         //----------------------------------------------------------------------
         // Smooth camera zoom based on force magnitude
@@ -1107,8 +1107,8 @@ void updateGraphics(void)
                                     cColorf(0.80, 0.80, 0.80),
                                     cColorf(0.80, 0.80, 0.80));
 
-        toolAudioSource->setGain(0.0);
-        toolAudioSource->setPitch(0.8);
+        // toolAudioSource->setGain(0.0);
+        // toolAudioSource->setPitch(0.8);
         camera->setSphericalDeg(1.0, 65.0, CURRENT_AZIMUTH_ANGLE);
     }
 
