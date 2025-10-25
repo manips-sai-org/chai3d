@@ -90,7 +90,7 @@ cDirectionalLight *light;
 
 // a virtual object
 cMultiMesh *object;
-cMultiMesh *cartoonMesh;
+// cMultiMesh *cartoonMesh;
 
 cShapeSphere *startingZone = nullptr;
 cShapeSphere *endingZone = nullptr;
@@ -588,35 +588,35 @@ int main(int argc, char *argv[])
 
     object->setEnabled(false);
 
-    cartoonMesh = new cMultiMesh();
+    // cartoonMesh = new cMultiMesh();
 
     // load an object file
-    bool fileload_cartoon;
-    // fileload = object->loadFromFile(RESOURCE_PATH("../resources/models/feel/protein_long_rev_one_hole.obj"));
-    fileload_cartoon = cartoonMesh->loadFromFile("../resources/models/feel/ruban/cartoon.obj");
-    if (!fileload_cartoon)
-    {
-#if defined(_MSVC)
-        fileload_cartoon = object->loadFromFile("../../../bin/resources/models/feel/protein_long_rev_holes.obj");
-#endif
-    }
-    if (!fileload_cartoon)
-    {
-        cout << "Error - 3D Model failed to load correctly" << endl;
-        close();
-        return (-1);
-    }
+    //     bool fileload_cartoon;
+    //     // fileload = object->loadFromFile(RESOURCE_PATH("../resources/models/feel/protein_long_rev_one_hole.obj"));
+    //     fileload_cartoon = cartoonMesh->loadFromFile("../resources/models/feel/ruban/cartoon.obj");
+    //     if (!fileload_cartoon)
+    //     {
+    // #if defined(_MSVC)
+    //         fileload_cartoon = object->loadFromFile("../../../bin/resources/models/feel/protein_long_rev_holes.obj");
+    // #endif
+    //     }
+    //     if (!fileload_cartoon)
+    //     {
+    //         cout << "Error - 3D Model failed to load correctly" << endl;
+    //         close();
+    //         return (-1);
+    //     }
 
-    cartoonMesh->computeBoundaryBox(true);
-    double size_v = cSub(cartoonMesh->getBoundaryMax(), cartoonMesh->getBoundaryMin()).length();
-    if (size_v > 0.001)
-        cartoonMesh->scale(1.0 / size_v);
+    // cartoonMesh->computeBoundaryBox(true);
+    // double size_v = cSub(cartoonMesh->getBoundaryMax(), cartoonMesh->getBoundaryMin()).length();
+    // if (size_v > 0.001)
+    //     cartoonMesh->scale(1.0 / size_v);
 
-    cartoonMesh->setHapticEnabled(true);
-    cartoonMesh->setLocalTransform(object->getLocalTransform());
-    cartoonMesh->createAABBCollisionDetector(toolRadiusContact);
+    // cartoonMesh->setHapticEnabled(true);
+    // cartoonMesh->setLocalTransform(object->getLocalTransform());
+    // cartoonMesh->createAABBCollisionDetector(toolRadiusContact);
 
-    cartoonMesh->setStiffness(0.2 * maxStiffness, true);
+    // cartoonMesh->setStiffness(0.2 * maxStiffness, true);
 
     // world->addChild(cartoonMesh);
 
@@ -626,26 +626,26 @@ int main(int argc, char *argv[])
 
     // import the cursor trajectory from protein_traj.csv
     // Load trajectory points from protein_traj.csv
-    std::vector<cVector3d> trajectoryPoints;
-    std::ifstream trajFile(RESOURCE_PATH("../resources/models/feel/protein_traj.csv"));
-    if (!trajFile.is_open())
-    {
-        std::cout << "Error - Trajectory file failed to open" << std::endl;
-        close();
-        return (-1);
-    }
-    std::string line;
-    while (std::getline(trajFile, line))
-    {
-        std::istringstream iss(line);
-        double x, y, z;
-        char comma;
-        if (iss >> x >> comma >> y >> comma >> z)
-        {
-            trajectoryPoints.push_back(cVector3d(x, y, z));
-        }
-    }
-    trajFile.close();
+    // std::vector<cVector3d> trajectoryPoints;
+    // std::ifstream trajFile(RESOURCE_PATH("../resources/models/feel/protein_traj.csv"));
+    // if (!trajFile.is_open())
+    // {
+    //     std::cout << "Error - Trajectory file failed to open" << std::endl;
+    //     close();
+    //     return (-1);
+    // }
+    // std::string line;
+    // while (std::getline(trajFile, line))
+    // {
+    //     std::istringstream iss(line);
+    //     double x, y, z;
+    //     char comma;
+    //     if (iss >> x >> comma >> y >> comma >> z)
+    //     {
+    //         trajectoryPoints.push_back(cVector3d(x, y, z));
+    //     }
+    // }
+    // trajFile.close();
 
     //--------------------------------------------------------------------------
     // STARTING AND ENDING ZONE SPHERES
