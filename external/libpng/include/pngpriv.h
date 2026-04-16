@@ -304,6 +304,7 @@ typedef PNG_CONST png_uint_16p FAR * png_const_uint_16pp;
 #    include <m68881.h>
 #  endif
 #endif
+#endif
 
 /* This provides the non-ANSI (far) memory allocation routines. */
 #if defined(__TURBOC__) && defined(__MSDOS__)
